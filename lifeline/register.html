@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — LifeLine by Cognora</title>
+  <meta name="description" content="Register for LifeLine, your hostel's self-healing operations platform.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a class="brand" href="index.html">
+        <span class="brand__pulse" aria-hidden="true"></span>
+        LifeLine <span class="brand__sub">by Cognora</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="login.html">Student Login</a>
+        <a href="register.html" aria-current="page">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div class="auth-shell">
+      <div class="auth-card auth-card--wide">
+        <p class="eyebrow">Student Registration</p>
+        <h1 style="margin-bottom:0.25rem;">Create your LifeLine account</h1>
+        <p class="text-muted" style="margin-bottom:1.5rem;">One-time registration. No email verification needed — you can log in immediately after signing up.</p>
+
+        <form id="register-form" novalidate>
+          <div class="form-grid form-grid--two">
+            <div class="field">
+              <label for="name">Full name <span class="required-mark">*</span></label>
+              <input type="text" id="name" name="name" autocomplete="name" required placeholder="e.g. Rohan Sharma">
+              <span class="field-error" id="err-name" role="alert"></span>
+            </div>
+            <div class="field">
+              <label for="phone">Phone number <span class="required-mark">*</span></label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel" required placeholder="10-digit mobile number" pattern="[0-9]{10}">
+              <span class="field-error" id="err-phone" role="alert"></span>
+            </div>
+            <div class="field">
+              <label for="bh_number">BH (Boys' Hostel) number <span class="required-mark">*</span></label>
+              <input type="text" id="bh_number" name="bh_number" required placeholder="e.g. BH-3">
+              <span class="field-error" id="err-bh" role="alert"></span>
+            </div>
+            <div class="field">
+              <label for="room_number">Room number <span class="required-mark">*</span></label>
+              <input type="text" id="room_number" name="room_number" required placeholder="e.g. 214">
+              <span class="field-error" id="err-room" role="alert"></span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="email">Email address <span class="required-mark">*</span></label>
+            <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+            <span class="hint">Used to log in. No verification email will be sent.</span>
+            <span class="field-error" id="err-email" role="alert"></span>
+          </div>
+
+          <div class="field">
+            <label for="boarding_pass">Upload BH boarding pass <span class="required-mark">*</span></label>
+            <input type="file" id="boarding_pass" name="boarding_pass" accept="image/*,.pdf" required aria-describedby="boarding-pass-hint">
+            <span class="hint" id="boarding-pass-hint">Photo or PDF of your hostel boarding pass, used to verify your room allocation.</span>
+            <span class="field-error" id="err-boarding" role="alert"></span>
+          </div>
+
+          <div class="form-grid form-grid--two">
+            <div class="field">
+              <label for="password">Create password <span class="required-mark">*</span></label>
+              <input type="password" id="password" name="password" autocomplete="new-password" required minlength="6" placeholder="At least 6 characters">
+              <span class="field-error" id="err-password" role="alert"></span>
+            </div>
+            <div class="field">
+              <label for="confirm_password">Confirm password <span class="required-mark">*</span></label>
+              <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required minlength="6" placeholder="Re-enter password">
+              <span class="field-error" id="err-confirm" role="alert"></span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block" id="register-btn">
+            Create my account
+          </button>
+        </form>
+
+        <p class="auth-card__foot">Already registered? <a href="login.html">Log in</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

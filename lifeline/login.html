@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Login — LifeLine by Cognora</title>
+  <meta name="description" content="Log in to LifeLine to report and track hostel infrastructure issues.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a class="brand" href="index.html">
+        <span class="brand__pulse" aria-hidden="true"></span>
+        LifeLine <span class="brand__sub">by Cognora</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="login.html" aria-current="page">Student Login</a>
+        <a href="register.html">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div class="auth-shell">
+      <div class="auth-card">
+        <p class="eyebrow">Student Login</p>
+        <h1 style="margin-bottom:1.5rem;">Welcome back</h1>
+
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+            <span class="field-error" id="err-email" role="alert"></span>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+            <span class="field-error" id="err-password" role="alert"></span>
+          </div>
+          <button type="submit" class="btn btn--primary btn--block" id="login-btn">Log in</button>
+        </form>
+
+        <p class="auth-card__foot">New here? <a href="register.html">Create an account</a></p>
+        <p class="auth-card__foot">Warden or staff? <a href="admin-login.html">Staff login</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

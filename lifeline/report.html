@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report an Issue — LifeLine by Cognora</title>
+  <meta name="description" content="Report a hostel infrastructure issue and watch LifeLine's sandbox engine simulate and rank a fix in real time.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a class="brand" href="index.html">
+        <span class="brand__pulse" aria-hidden="true"></span>
+        LifeLine <span class="brand__sub">by Cognora</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="report.html" aria-current="page">Report Issue</a>
+        <a href="#my-reports">My Reports</a>
+        <a href="#" data-logout>Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="section" style="padding-top:2rem;">
+      <div class="container container--narrow">
+        <p class="eyebrow">New Report</p>
+        <h1 style="margin-bottom:0.25rem;">What's going on, <span id="student-name">there</span>?</h1>
+        <p class="text-muted">Pick a category, tell us what happened and where, and attach a photo if you can.</p>
+
+        <form id="report-form" novalidate class="card" style="margin-top:1.5rem;">
+          <div class="field">
+            <label id="category-label">Category <span class="required-mark">*</span></label>
+            <div class="category-grid" role="radiogroup" aria-labelledby="category-label" id="category-grid"></div>
+            <span class="field-error" id="err-category" role="alert"></span>
+          </div>
+
+          <div class="field">
+            <label for="description">What happened? <span class="required-mark">*</span></label>
+            <textarea id="description" name="description" required placeholder="Describe the issue in as much detail as you can — e.g. what you saw, heard, or smelled, and when it started."></textarea>
+            <span class="field-error" id="err-description" role="alert"></span>
+          </div>
+
+          <div class="field">
+            <label for="location">Where did this happen? <span class="required-mark">*</span></label>
+            <input type="text" id="location" name="location" required placeholder="e.g. BH-3, Floor 2, near Room 214 washroom">
+            <span class="field-error" id="err-location" role="alert"></span>
+          </div>
+
+          <div class="field">
+            <label for="image">Upload a photo (optional but recommended)</label>
+            <input type="file" id="image" name="image" accept="image/*">
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block" id="submit-btn">
+            Submit &amp; run sandbox analysis
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SANDBOX CONSOLE — appears once a report is submitted
+         ============================================================ -->
+    <section class="section" id="sandbox-section" hidden>
+      <div class="container container--narrow">
+        <div class="sandbox" id="sandbox">
+          <div class="sandbox__header">
+            <h2 class="sandbox__title">
+              <span class="sandbox__dot" aria-hidden="true"></span>
+              Sandbox Simulation Console
+            </h2>
+            <span class="sandbox__status-text" id="sandbox-status-text">initializing…</span>
+          </div>
+          <div class="sandbox__body">
+            <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+              Nothing here touches real hostel systems. LifeLine correlates your report against
+              simulated telemetry and rehearses a recovery playbook before recommending it to a warden.
+            </p>
+            <div class="sandbox__log" id="sandbox-log" role="log" aria-live="polite"></div>
+
+            <div class="sandbox__meter-row">
+              <div class="sandbox__meter">
+                <span class="sandbox__meter-value" id="meter-score">—</span>
+                <span class="sandbox__meter-label">Explainability Score</span>
+              </div>
+              <div class="sandbox__meter">
+                <span class="sandbox__meter-value" id="meter-signals">—</span>
+                <span class="sandbox__meter-label">Signals Matched</span>
+              </div>
+              <div class="sandbox__meter">
+                <span class="sandbox__meter-value" id="meter-confidence">—</span>
+                <span class="sandbox__meter-label">NN Confidence</span>
+              </div>
+              <div class="sandbox__meter">
+                <span class="sandbox__meter-value" id="meter-steps">0/0</span>
+                <span class="sandbox__meter-label">Steps Complete</span>
+              </div>
+            </div>
+
+            <div class="sandbox__result" id="sandbox-result">
+              <div class="cluster" style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <span>Risk classification:</span>
+                <span class="badge" id="risk-badge"></span>
+                <span id="nn-confidence-pill" class="badge" style="background:rgba(56,189,248,0.15); color:var(--accent,#38bdf8); border:1px solid rgba(56,189,248,0.3);">NN Confidence: —</span>
+              </div>
+
+              <!-- Neural Network Probability Distribution Visualizer -->
+              <div class="nn-prob-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border, #334155); border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0;">
+                <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+                  <span>🧠 Neural Network Risk Probabilities</span>
+                  <span id="nn-dominant-label" style="font-size: 0.75rem; color: var(--text-muted, #94a3b8);">Softmax Distribution</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.8rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="width: 58px; font-weight: 600; color: #10b981;">LOW</span>
+                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                      <div id="prob-bar-low" style="width: 0%; height: 100%; background: #10b981; transition: width 0.6s ease;"></div>
+                    </div>
+                    <span id="prob-val-low" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="width: 58px; font-weight: 600; color: #f59e0b;">MEDIUM</span>
+                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                      <div id="prob-bar-medium" style="width: 0%; height: 100%; background: #f59e0b; transition: width 0.6s ease;"></div>
+                    </div>
+                    <span id="prob-val-medium" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="width: 58px; font-weight: 600; color: #ef4444;">HIGH</span>
+                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                      <div id="prob-bar-high" style="width: 0%; height: 100%; background: #ef4444; transition: width 0.6s ease;"></div>
+                    </div>
+                    <span id="prob-val-high" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
+                  </div>
+                </div>
+              </div>
+
+              <h3 style="margin-bottom:0.35rem;">Recommended playbook</h3>
+              <p id="ai-solution-text"></p>
+              <h3 style="margin-bottom:0.35rem;">Why this happened</h3>
+              <p id="ai-reasoning-text"></p>
+
+              <div class="sandbox__approval-note" id="approval-note">
+                <span aria-hidden="true">🛡️</span>
+                <span id="approval-note-text"></span>
+              </div>
+
+              <a href="#my-reports" class="btn btn--ghost" style="margin-top:1.25rem;">View in My Reports</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         MY REPORTS
+         ============================================================ -->
+    <section class="section section--alt" id="my-reports">
+      <div class="container">
+        <h2>My reports</h2>
+        <div id="my-reports-list" class="stack">
+          <p class="text-faint">Loading your reports…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/model/risk-model.js"></script>
+  <script src="js/nn-inference.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>

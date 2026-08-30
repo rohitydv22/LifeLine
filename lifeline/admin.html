@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ops Dashboard — LifeLine by Cognora</title>
+  <meta name="description" content="Warden and staff dashboard for reviewing AI-ranked hostel infrastructure reports and approving recovery playbooks.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a class="brand" href="index.html">
+        <span class="brand__pulse" aria-hidden="true"></span>
+        LifeLine <span class="brand__sub">by Cognora</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="admin.html" aria-current="page">Ops Dashboard</a>
+        <a href="#" data-logout>Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="section" style="padding-top:2rem;">
+      <div class="container">
+        <p class="eyebrow">Warden / Staff Console</p>
+        <h1>Ops dashboard</h1>
+        <p class="text-muted">AI-ranked reports from students, simulated in sandbox before you approve anything.</p>
+
+        <div class="stat-strip" id="stat-strip">
+          <div class="stat-box"><span class="stat-box__num" id="stat-total">—</span><span class="stat-box__label">Total reports</span></div>
+          <div class="stat-box"><span class="stat-box__num" id="stat-review">—</span><span class="stat-box__label">Awaiting review</span></div>
+          <div class="stat-box"><span class="stat-box__num" id="stat-high">—</span><span class="stat-box__label">High risk</span></div>
+          <div class="stat-box"><span class="stat-box__num" id="stat-approved">—</span><span class="stat-box__label">Approved</span></div>
+        </div>
+
+        <div class="filter-bar" id="status-filters" role="group" aria-label="Filter by status">
+          <button class="filter-chip" data-status="all" aria-pressed="true">All</button>
+          <button class="filter-chip" data-status="pending" aria-pressed="false">Pending sandbox</button>
+          <button class="filter-chip" data-status="in_review" aria-pressed="false">Awaiting approval</button>
+          <button class="filter-chip" data-status="approved" aria-pressed="false">Approved</button>
+          <button class="filter-chip" data-status="rejected" aria-pressed="false">Rejected</button>
+        </div>
+        <div class="filter-bar" id="risk-filters" role="group" aria-label="Filter by risk">
+          <button class="filter-chip" data-risk="all" aria-pressed="true">Any risk</button>
+          <button class="filter-chip" data-risk="high" aria-pressed="false">High</button>
+          <button class="filter-chip" data-risk="medium" aria-pressed="false">Medium</button>
+          <button class="filter-chip" data-risk="low" aria-pressed="false">Low</button>
+        </div>
+
+        <div id="admin-reports-list" class="stack">
+          <p class="text-faint">Loading reports…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/model/risk-model.js"></script>
+  <script src="js/nn-inference.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
