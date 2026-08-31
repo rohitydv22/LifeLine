@@ -95,7 +95,7 @@ function setDemoSession(role = "admin", name = "Chief Warden / Ops Lead") {
   return sess;
 }
 
-// Requires a logged-in session; redirects to login.html otherwise (or auto-initializes demo session).
+// Requires a logged-in session; redirects to login.html otherwise.
 // Returns { user, profile }.
 async function requireAuth() {
   try {
@@ -111,15 +111,18 @@ async function requireAuth() {
       }
     }
   } catch (err) {
-    console.warn("Supabase auth check bypassed to demo session:", err);
+    console.warn("Supabase auth check fallback:", err);
   }
 
-  // Fallback to demo session or auto-initialize student demo
-  let demo = getDemoSession();
-  if (!demo) {
-    demo = setDemoSession("student", "Student (Rohan Sharma)");
+  // Check demo session
+  const demo = getDemoSession();
+  if (demo && demo.profile) {
+    return demo;
   }
-  return demo;
+
+  // Not logged in -> redirect to student login
+  window.location.href = "login.html";
+  return null;
 }
 
 async function requireAdmin() {
@@ -136,21 +139,25 @@ async function requireAdmin() {
       }
     }
   } catch (err) {
-    console.warn("Supabase admin auth check bypassed to demo admin:", err);
+    console.warn("Supabase admin auth check fallback:", err);
   }
 
-  // Fallback to admin demo session
-  let demo = getDemoSession();
-  if (!demo || demo.profile.role !== "admin") {
-    demo = setDemoSession("admin", "Chief Warden & AIOps Controller");
+  // Check demo session
+  const demo = getDemoSession();
+  if (demo && demo.profile && demo.profile.role === "admin") {
+    return demo;
   }
-  return demo;
+
+  // Not logged in as admin -> redirect to staff login
+  window.location.href = "admin-login.html";
+  return null;
 }
 
 function wireLogoutButton() {
   const btn = document.querySelector("[data-logout]");
   if (!btn) return;
-  btn.addEventListener("click", async () => {
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
     localStorage.removeItem("lifeline_demo_session");
     try { await sb.auth.signOut(); } catch (e) {}
     window.location.href = "index.html";

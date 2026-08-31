@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warden / Staff Login — LifeLine by Cognora</title>
-  <meta name="description" content="Warden and staff login for the LifeLine hostel operations dashboard.">
+  <title>Warden &amp; Staff Login — LifeLine AIOps</title>
+  <meta name="description" content="Warden and staff authentication for LifeLine campus operations controller.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,7 +18,8 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="index.html">Home</a>
-        <a href="admin-login.html" aria-current="page">Warden / Staff</a>
+        <a href="login.html">Student Login</a>
+        <a href="admin-login.html" aria-current="page">Staff Login</a>
       </nav>
     </div>
   </header>
@@ -26,38 +27,53 @@
   <main id="main-content">
     <div class="auth-shell">
       <div class="auth-card">
-        <p class="eyebrow">Warden / Staff Login</p>
-        <h1 style="margin-bottom:0.5rem;">Ops dashboard access</h1>
-        <p class="text-muted" style="margin-bottom:1.5rem;">Staff accounts are created by the hackathon organizers directly in Supabase (role = "admin").</p>
+        <p class="eyebrow">Warden &amp; Staff Gateway</p>
+        <h1 style="margin-bottom:0.25rem;">AIOps Ops Console</h1>
+        <p class="text-muted" style="margin-bottom:1.25rem; font-size:0.88rem;">
+          Access the live infrastructure topology, approval queue, fault simulation, and self-healing engine.
+        </p>
 
-        <form id="login-form" novalidate>
+        <!-- Quick 1-Click Demo Login Banner -->
+        <div style="background: rgba(63, 208, 255, 0.08); border: 1px solid rgba(63, 208, 255, 0.25); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem;">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--accent); margin-bottom:0.4rem;">⚡ Fast Evaluator / Demo Access</div>
+          <button type="button" class="btn btn--primary btn--block" id="demo-admin-btn" style="padding:0.6rem 1rem; font-size:0.88rem;">
+            Instant Warden Login (1-Click) →
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; color:var(--text-faint); font-size:0.78rem;">
+          <div style="flex:1; height:1px; background:var(--border-soft);"></div>
+          <span>OR SIGN IN WITH CREDENTIALS</span>
+          <div style="flex:1; height:1px; background:var(--border-soft);"></div>
+        </div>
+
+        <form id="login-form" novalidate data-redirect="admin.html">
           <div class="field">
-            <label for="email">Staff email address</label>
-            <input type="email" id="email" name="email" autocomplete="email" required>
+            <label for="email">Staff Email Address</label>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="admin@lifeline.campus" value="admin@lifeline.campus" required>
             <span class="field-error" id="err-email" role="alert"></span>
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" required>
+            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" value="admin123" required>
             <span class="field-error" id="err-password" role="alert"></span>
           </div>
-          <button type="submit" class="btn btn--primary btn--block" id="login-btn">Log in to dashboard</button>
+          <button type="submit" class="btn btn--ghost btn--block" id="login-btn" style="border-color:var(--border);">
+            Log in to Ops Dashboard
+          </button>
         </form>
 
-        <p class="auth-card__foot">Student? <a href="login.html">Student login</a></p>
+        <p class="auth-card__foot" style="margin-top:1.25rem;">Student looking to report an issue? <a href="login.html">Student Portal Login</a></p>
       </div>
     </div>
   </main>
 
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 Campus AIOps Controller.</div>
   </footer>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-client.js"></script>
-  <script>
-    document.getElementById("login-form").dataset.redirect = "admin.html";
-  </script>
   <script src="js/login.js"></script>
 </body>
 </html>
