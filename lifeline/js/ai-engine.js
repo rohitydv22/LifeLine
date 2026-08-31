@@ -22,6 +22,12 @@ const SEVERITY_KEYWORDS = {
   ],
   network: [
     ["down", 5], ["outage", 6], ["no internet", 4], ["router", 2], ["slow", 1], ["disconnect", 3],
+    ["entire hostel", 8], ["all rooms", 8], ["gateway", 6], ["switch", 5], ["ap offline", 6]
+  ],
+  mess_food: [
+    ["contaminat", 10], ["food poisoning", 10], ["sour smell", 8], ["undercooked", 8],
+    ["stale", 6], ["insects in food", 9], ["vomit", 9], ["nausea", 9], ["unhygienic", 7],
+    ["discolored water", 8], ["roaches", 7], ["foreign object", 9], ["foul taste", 7]
   ],
   fire_safety: [
     ["fire", 10], ["smoke", 10], ["alarm", 7], ["extinguisher missing", 8], ["blocked exit", 9], ["gas leak", 10],
@@ -41,57 +47,64 @@ const SEVERITY_KEYWORDS = {
 const GLOBAL_URGENCY_KEYWORDS = [
   ["injured", 10], ["injury", 10], ["hurt", 8], ["can't breathe", 10], ["trapped", 10],
   ["immediately", 3], ["right now", 3], ["everyone", 2], ["entire floor", 4], ["entire hostel", 5],
+  ["campus wide", 7], ["all students", 6]
 ];
 
 const PLAYBOOKS = {
   electrical: {
-    low: "Log ticket for electrician's next scheduled round. No isolation needed; monitor for recurrence over 48 hours.",
-    medium: "Isolate the affected circuit at the room/floor distribution board and dispatch an electrician within 4 hours. Advise occupants to avoid the fixture until cleared.",
-    high: "Immediately cut mains power to the affected room/floor from the distribution board, evacuate the area if smoke/sparking was reported, and escalate to the on-call electrician and fire safety officer before any student re-enters.",
+    low: "PHYSICAL WORK ORDER: Log ticket for electrician's next scheduled round. No isolation needed; monitor for recurrence.",
+    medium: "PHYSICAL WORK ORDER: Isolate the affected circuit at the distribution board and dispatch an electrician within 4 hours.",
+    high: "PHYSICAL WORK ORDER (URGENT): Cut mains power to the affected wing from DB panel, evacuate area, and dispatch Senior Electrical Engineer & Safety Officer immediately.",
   },
   plumbing: {
-    low: "Schedule a plumber visit within 2 working days; place a bucket/tray if dripping to prevent floor damage.",
-    medium: "Shut the local supply valve for the affected room, dispatch a plumber same-day, and check adjoining rooms/floors below for water ingress.",
-    high: "Shut the main water supply line for the wing immediately, evacuate rooms directly below if flooding is active, and treat any reported gas smell as a Fire/Safety co-incident requiring simultaneous gas-line shutoff.",
+    low: "PHYSICAL WORK ORDER: Schedule a plumber visit within 24-48 hours; place drip tray to prevent flooring damage.",
+    medium: "PHYSICAL WORK ORDER: Shut local isolation valve for affected wing, dispatch duty plumber same-day, and check adjacent rooms for seepage.",
+    high: "PHYSICAL WORK ORDER (URGENT): Trigger emergency solenoid shutoff on main riser, cordon lower levels, and dispatch Emergency Civil Maintenance.",
   },
   network: {
-    low: "Restart the nearest access point remotely; if unresolved, log for the next maintenance window.",
-    medium: "Dispatch IT support to inspect the floor switch/access point; notify affected rooms of expected downtime.",
-    high: "Escalate to network admin — potential building-wide outage; verify core switch and ISP uplink status, activate backup link if configured.",
+    low: "DIGITAL SELF-HEALING: Remotely cycle BSSID radio beacon and flush DHCP lease table on local room Access Point.",
+    medium: "DIGITAL SELF-HEALING / IT DISPATCH: Re-balance PoE power profile, reboot Floor Edge switch ports, and verify VLAN trunks.",
+    high: "DIGITAL SELF-HEALING (HIGH-IMPACT): Execute distribution switch uplink failover, restart STP trunk interfaces, and notify Network Ops Admin.",
+  },
+  mess_food: {
+    low: "FOOD SAFETY AUDIT: Log feedback for hostel mess contractor and inspect serving counter cleanliness during next round.",
+    medium: "FOOD SAFETY AUDIT: Dispatch Mess Supervisor to verify bain-marie food temperatures, inspect kitchen hygiene, and audit raw ingredients.",
+    high: "SAFETY ESCALATION (NON-DIGITAL): Potential food safety concern flagged — immediately halt serving affected meal lot, quarantine samples for microbiological assay, and dispatch Medical Officer and Food Safety Committee for on-site inspection.",
   },
   fire_safety: {
-    low: "Log for routine fire-safety inspection; confirm nearest extinguisher and alarm are functional.",
-    medium: "Send facilities to inspect the reported hazard within the hour; keep the area cordoned until cleared.",
-    high: "Trigger evacuation protocol for the affected floor/wing immediately, alert the fire safety officer and local fire services, and do not allow re-entry until an all-clear is issued.",
+    low: "PHYSICAL INSPECTION: Log for routine fire-safety check; confirm nearest extinguisher and alarm beacon are functional.",
+    medium: "PHYSICAL INSPECTION: Send facilities team to inspect the reported hazard within the hour; keep the area cordoned.",
+    high: "SAFETY ESCALATION (URGENT): Trigger evacuation alarm for affected floor/wing immediately, alert Chief Fire Safety Officer and local emergency services.",
   },
   structural: {
-    low: "Log for the next facilities inspection round; advise light-touch use of the affected fixture (e.g. railing, door).",
-    medium: "Cordon off the immediate area, dispatch facilities/civil maintenance within the day, restrict access until assessed.",
-    high: "Evacuate the affected room and rooms directly above/below, cordon the area, and escalate to a structural engineer before permitting any re-entry.",
+    low: "PHYSICAL WORK ORDER: Log for facilities inspection round; advise light-touch use of affected fixture.",
+    medium: "PHYSICAL WORK ORDER: Cordon off the immediate area, dispatch civil maintenance team within the day.",
+    high: "SAFETY ESCALATION (URGENT): Evacuate affected room and rooms directly above/below, cordon area, and dispatch Structural Engineer.",
   },
   sanitation: {
-    low: "Add to the next housekeeping round; no immediate health risk identified.",
-    medium: "Dispatch housekeeping same-day and flag for pest control if infestation-related.",
-    high: "Treat as an active health hazard — dispatch housekeeping and pest control immediately, restrict access to the affected common area until sanitized.",
+    low: "HOUSEKEEPING: Add to next housekeeping round; no immediate health risk identified.",
+    medium: "HOUSEKEEPING: Dispatch housekeeping same-day and flag for pest control if infestation-related.",
+    high: "SAFETY WORK ORDER: Treat as an active sanitation hazard — dispatch emergency cleaning & fumigation, cordon common area until sanitized.",
   },
   security: {
-    low: "Log the report and include in the next security patrol briefing.",
-    medium: "Notify hostel security to inspect the lock/entry point within the hour and issue a temporary fix (e.g. padlock) if needed.",
-    high: "Alert hostel security and warden immediately, treat as an active security incident, and review nearest camera footage before any further action.",
+    low: "SECURITY LOG: Log report for next security patrol briefing.",
+    medium: "SECURITY DISPATCH: Notify hostel security guard to inspect the lock/entry point within the hour and issue temporary fix.",
+    high: "SECURITY ESCALATION (URGENT): Alert Hostel Warden & Chief Security Officer immediately, treat as active security breach, and review CCTV footage.",
   },
   other: {
-    low: "Log for warden review during regular office hours.",
-    medium: "Flag for same-day warden review; gather more detail from the student if needed.",
-    high: "Escalate to the warden on-call immediately for manual triage.",
+    low: "OPERATIONS: Log for warden review during regular office hours.",
+    medium: "OPERATIONS: Flag for same-day warden review; gather more detail if needed.",
+    high: "OPERATIONS (URGENT): Escalate to the warden on-call immediately for emergency triage.",
   },
 };
 
 const CAUSE_TEMPLATES = {
   electrical: "wiring degradation, an overloaded circuit, or a faulty fixture in the reported location",
-  plumbing: "pipe wear, a joint failure, or blockage causing pressure buildup in the reported location",
-  network: "an access point or switch fault, or an upstream ISP/core network disruption",
+  plumbing: "pipe wear, a joint failure, or pressure surge causing water release",
+  network: "an access point DHCP contention, edge switch PoE issue, or distribution fiber uplink drop",
+  mess_food: "temperature holding failure in steam tables or potential ingredient cross-contamination requiring human inspection",
   fire_safety: "a fire-safety hazard requiring physical inspection to confirm ignition source or blockage",
-  structural: "material fatigue, water damage, or an installation fault in the reported fixture",
+  structural: "material fatigue, water ingress damage, or an installation fault in the reported fixture",
   sanitation: "irregular waste clearance, drainage blockage, or a pest entry point near the reported location",
   security: "a mechanical lock/entry-point fault or unauthorized access attempt",
   other: "an issue outside the standard telemetry categories, requiring manual classification",
@@ -122,15 +135,17 @@ function severityToRisk(score) {
 }
 
 /**
- * Core "AI" analysis step — Neural Network classifier + explainability signals.
- * Predicts riskLevel and confidence via Neural Network while retaining keyword signals.
- * Returns { riskLevel, confidence, probabilities, reasoning, solution, score, matchedSignals }.
+ * Core "AI" analysis step — Neural Network classifier + Hybrid Operational Decision Engine.
+ * 
+ * Frame: The Neural Network assists incident classification, while LifeLine combines
+ * ML predictions with infrastructure evidence, student impact, and safety rules to make
+ * operational decisions.
  */
-function analyzeReport({ category, description, location }) {
+function analyzeReport({ category, description, location, usersAffected = null, similarReportCount = 1 }) {
   // 1. Keyword explainability signals
   const { score, matched } = scoreSeverity(category, description);
 
-  // 2. Neural Network inference
+  // 2. Neural Network inference (TF-IDF -> One-Hot -> MLP Forward Pass)
   let nnResult = null;
   if (typeof predictRisk === "function") {
     try {
@@ -140,33 +155,76 @@ function analyzeReport({ category, description, location }) {
     }
   }
 
-  const riskLevel = nnResult ? nnResult.riskLevel : severityToRisk(score);
-  const confidence = nnResult ? nnResult.confidence : 0.75;
+  const rawRiskLevel = nnResult ? nnResult.riskLevel : severityToRisk(score);
+  const confidence = nnResult ? nnResult.confidence : 0.78;
   const probabilities = nnResult ? nnResult.probabilities : {
-    low: riskLevel === "low" ? 0.8 : 0.1,
-    medium: riskLevel === "medium" ? 0.8 : 0.1,
-    high: riskLevel === "high" ? 0.8 : 0.1,
+    low: rawRiskLevel === "low" ? 0.8 : 0.1,
+    medium: rawRiskLevel === "medium" ? 0.8 : 0.1,
+    high: rawRiskLevel === "high" ? 0.8 : 0.1,
   };
 
-  const playbook = (PLAYBOOKS[category] || PLAYBOOKS.other)[riskLevel];
-  const cause = CAUSE_TEMPLATES[category] || CAUSE_TEMPLATES.other;
+  // 3. Hybrid Operational Priority Engine integration
+  let hybridPriority = null;
+  if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.calculateHybridPriority) {
+    hybridPriority = CampusStateEngine.calculateHybridPriority({
+      nnResult: { riskLevel: rawRiskLevel, confidence, probabilities },
+      category,
+      description,
+      location,
+      usersAffected,
+      similarReportCount
+    });
+  } else {
+    // Fallback if CampusStateEngine not loaded
+    hybridPriority = {
+      finalPriority: rawRiskLevel === "high" ? "P1 - Critical" : rawRiskLevel === "medium" ? "P2 - High" : "P3 - Medium",
+      priorityBadge: rawRiskLevel.toUpperCase(),
+      priorityClass: rawRiskLevel,
+      explanation: `Operational Priority assigned from Neural Network classification.`
+    };
+  }
+
+  // 4. Wi-Fi Multi-Tier Root Cause Analysis (if network)
+  let wifiRca = null;
+  if (category === "network" && typeof CampusStateEngine !== "undefined" && CampusStateEngine.analyzeWifiHierarchy) {
+    wifiRca = CampusStateEngine.analyzeWifiHierarchy({ location, description, reportsInZone: similarReportCount });
+  }
+
+  // 5. Student Impact Calculation
+  let studentImpact = null;
+  if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.calculateStudentImpact) {
+    studentImpact = CampusStateEngine.calculateStudentImpact({
+      category,
+      description,
+      usersAffected: hybridPriority.userCount || 10
+    });
+  }
+
+  const playbook = (PLAYBOOKS[category] || PLAYBOOKS.other)[rawRiskLevel];
+  const cause = wifiRca ? wifiRca.rootCause : (CAUSE_TEMPLATES[category] || CAUSE_TEMPLATES.other);
 
   const signalText = matched.length
-    ? `Correlated signal terms detected in the report: ${[...new Set(matched)].slice(0, 5).join(", ")}.`
-    : "No elevated severity signal terms detected in the report text.";
+    ? `Correlated signal terms detected: ${[...new Set(matched)].slice(0, 5).join(", ")}.`
+    : "Standard report text without extreme emergency keywords.";
+
+  const isDigital = category === "network" || (description || "").toLowerCase().includes("website") || (description || "").toLowerCase().includes("portal");
 
   const confPercent = Math.round(confidence * 100);
   const reasoning =
-    `Neural Network classified category "${formatCategory(category)}" as ${riskLevel.toUpperCase()} risk with ` +
-    `${confPercent}% confidence (Probabilities: Low ${Math.round(probabilities.low * 100)}%, ` +
-    `Medium ${Math.round(probabilities.medium * 100)}%, High ${Math.round(probabilities.high * 100)}%). ` +
-    `${signalText} Composite explainability score: ${score}/30+. Location: ${location || "unspecified"}. ` +
-    `Likely root cause: ${cause}. High-risk actions require human warden approval before execution.`;
+    `Neural Network assistance model classified text features as ${rawRiskLevel.toUpperCase()} raw risk (${confPercent}% model confidence). ` +
+    `LifeLine Hybrid Priority Engine formulated final operational priority as ${hybridPriority.finalPriority} ` +
+    `(Service Criticality Tier ${hybridPriority.criticality || 3}/5, affecting ~${(hybridPriority.userCount || 4).toLocaleString()} students). ` +
+    `${signalText} Location: ${location || "Campus Zone"}. Likely root cause: ${cause}. ` +
+    (isDigital ? "Digital recovery candidate validated for sandbox simulation." : "Physical/Safety event — dispatched to maintenance & human oversight authorities.");
 
   return {
-    riskLevel,
+    riskLevel: rawRiskLevel,
     confidence,
     probabilities,
+    hybridPriority,
+    studentImpact,
+    wifiRca,
+    isDigital,
     reasoning,
     solution: playbook,
     score,
@@ -175,41 +233,34 @@ function analyzeReport({ category, description, location }) {
 }
 
 function formatCategory(id) {
-  // CATEGORIES is declared in js/supabase-client.js, loaded before this file.
   const found = (typeof CATEGORIES !== "undefined" ? CATEGORIES : []).find((c) => c.id === id);
   return found ? found.label : id;
 }
 
 /**
  * Simulated sandbox pipeline — an ordered list of steps with timestamps and
- * severities, used to animate the "sandbox console" UI and to persist a
- * durable sandbox_log / audit_trail on the report row. This never touches
- * real infrastructure — it is a UI + reasoning simulation, matching the
- * "simulate or sandbox changes before execution" requirement.
+ * severities, demonstrating pre-flight checks against a cloned state copy
+ * (structuredClone) before any live action is taken.
  */
 function buildSandboxSteps({ category, description, location }, analysis) {
   const cat = formatCategory(category);
   const confPct = Math.round((analysis.confidence || 0.8) * 100);
   const probs = analysis.probabilities || { low: 0, medium: 0, high: 0 };
   const probStr = `[Low: ${Math.round(probs.low * 100)}% | Med: ${Math.round(probs.medium * 100)}% | High: ${Math.round(probs.high * 100)}%]`;
+  const opPriority = analysis.hybridPriority ? analysis.hybridPriority.finalPriority : "P2 - High";
 
   const steps = [
-    { text: `Ingesting report metadata (category: ${cat}, location: ${location || "n/a"})`, level: "ok" },
-    { text: "Extracting TF-IDF text features & category embeddings for Neural Network…", level: "ok" },
-    { text: "Correlating with network logs, application telemetry, and facility alarm feed…", level: "ok" },
-    { text: "Cross-checking IoT sensor availability for the reported zone…", level: analysis.riskLevel === "high" ? "warn" : "ok" },
-    { text: analysis.matchedSignals && analysis.matchedSignals.length
-        ? `Signal match: ${[...new Set(analysis.matchedSignals)].slice(0, 4).join(", ")}`
-        : "No elevated signal terms found in report text", level: (analysis.matchedSignals && analysis.matchedSignals.length) ? "warn" : "ok" },
-    { text: `Neural Network inference complete → ${analysis.riskLevel.toUpperCase()} (${confPct}% confidence) ${probStr}`, level: analysis.riskLevel === "high" ? "crit" : analysis.riskLevel === "medium" ? "warn" : "ok" },
-    { text: `Running candidate recovery playbook in sandbox (no live systems affected)…`, level: "ok" },
-    { text: `Simulated outcome: playbook resolves ${analysis.riskLevel === "high" ? "the immediate hazard, pending human confirmation" : "the reported issue with standard remediation"}.`,
-      level: analysis.riskLevel === "high" ? "warn" : "ok" },
-    { text: `Computing composite explainability score → ${analysis.score}/30+`, level: "ok" },
-    { text: `Risk classified as ${analysis.riskLevel.toUpperCase()}.`, level: analysis.riskLevel === "high" ? "crit" : analysis.riskLevel === "medium" ? "warn" : "ok" },
-    { text: analysis.riskLevel === "high"
-        ? "High-impact action — routing to warden/staff dashboard for MANDATORY human approval before execution."
-        : "Routing recommendation to warden/staff dashboard for review and approval.", level: "ok" },
+    { text: `Ingesting telemetry & student report metadata (category: ${cat}, location: ${location || "Campus Zone"})`, level: "ok" },
+    { text: "Extracting TF-IDF text features & category embeddings for Neural Network forward pass…", level: "ok" },
+    { text: `Neural Network raw risk classification → ${analysis.riskLevel.toUpperCase()} (${confPct}% model confidence) ${probStr}`, level: analysis.riskLevel === "high" ? "crit" : analysis.riskLevel === "medium" ? "warn" : "ok" },
+    { text: "Evaluating service criticality, student headcount, and safety risk factors…", level: "ok" },
+    { text: `Hybrid Decision Engine assigned Operational Priority → ${opPriority}`, level: opPriority.includes("Critical") ? "crit" : opPriority.includes("High") ? "warn" : "ok" },
+    { text: "Cloning campus state graph (structuredClone) to isolated sandbox runner…", level: "ok" },
+    { text: analysis.isDigital
+        ? "Rehearsing automated recovery playbook against staging replica pod…"
+        : "Categorized as Physical / Safety incident — drafting work order for human dispatch…", level: "ok" },
+    { text: `Simulated outcome: ${analysis.isDigital ? "Pre-flight checks passed with zero side-effects" : "Dispatched work order notification to duty authorities"}.`, level: "ok" },
+    { text: "Enforcing Human Governance Gate: Two-stage confirmation (Warden Approval + Final Warning) required before any live action.", level: "warn" }
   ];
   return steps;
 }
@@ -233,6 +284,8 @@ if (typeof window !== "undefined") {
   window.buildSandboxSteps = buildSandboxSteps;
   window.scoreSeverity = scoreSeverity;
   window.severityToRisk = severityToRisk;
+  window.PLAYBOOKS = PLAYBOOKS;
+  window.SEVERITY_KEYWORDS = SEVERITY_KEYWORDS;
 }
 
 

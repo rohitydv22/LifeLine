@@ -3,67 +3,417 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ops Dashboard — LifeLine by Cognora</title>
-  <meta name="description" content="Warden and staff dashboard for reviewing AI-ranked hostel infrastructure reports and approving recovery playbooks.">
+  <title>Ops Dashboard &amp; AIOps Controller — LifeLine by Cognora</title>
+  <meta name="description" content="Stateful Campus Operations Platform: Live Topology, Fault Injection, Hybrid Priority Engine, Sandbox Simulation, Two-Stage Self-Healing, and Real MTTD/MTTR Analytics.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
+  <!-- Main Site Header -->
   <header class="site-header">
     <div class="container nav-bar">
       <a class="brand" href="index.html">
         <span class="brand__pulse" aria-hidden="true"></span>
-        LifeLine <span class="brand__sub">by Cognora</span>
+        LifeLine <span class="brand__sub">AIOps Controller</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
-        <a href="admin.html" aria-current="page">Ops Dashboard</a>
+        <a href="admin.html" aria-current="page">Ops Console</a>
+        <a href="report.html" target="_blank">Student Report View ↗</a>
+        <button id="btn-quick-reset" class="btn btn--ghost btn--sm" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: var(--border);">🔄 Reset Campus State</button>
         <a href="#" data-logout>Log out</a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
-    <section class="section" style="padding-top:2rem;">
+    <section class="section" style="padding-top:1.75rem; padding-bottom:3.5rem;">
       <div class="container">
-        <p class="eyebrow">Warden / Staff Console</p>
-        <h1>Ops dashboard</h1>
-        <p class="text-muted">AI-ranked reports from students, simulated in sandbox before you approve anything.</p>
-
-        <div class="stat-strip" id="stat-strip">
-          <div class="stat-box"><span class="stat-box__num" id="stat-total">—</span><span class="stat-box__label">Total reports</span></div>
-          <div class="stat-box"><span class="stat-box__num" id="stat-review">—</span><span class="stat-box__label">Awaiting review</span></div>
-          <div class="stat-box"><span class="stat-box__num" id="stat-high">—</span><span class="stat-box__label">High risk</span></div>
-          <div class="stat-box"><span class="stat-box__num" id="stat-approved">—</span><span class="stat-box__label">Approved</span></div>
+        
+        <!-- Header Strip -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <p class="eyebrow">AIOps Governance &amp; Telemetry Controller</p>
+            <h1 style="margin-bottom:0.25rem;">Campus Operations Dashboard</h1>
+            <p class="text-muted" style="margin-bottom:0;">Live telemetry graph, fault simulation, hybrid priority classification, and human-in-the-loop self-healing.</p>
+          </div>
+          <div id="live-pulse-indicator" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
+            <span class="status-dot" style="background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
+            <span>Telemetry Bus: <span style="color: #10b981;">ONLINE (Real-Time Sync)</span></span>
+          </div>
         </div>
 
-        <div class="filter-bar" id="status-filters" role="group" aria-label="Filter by status">
-          <button class="filter-chip" data-status="all" aria-pressed="true">All</button>
-          <button class="filter-chip" data-status="pending" aria-pressed="false">Pending sandbox</button>
-          <button class="filter-chip" data-status="in_review" aria-pressed="false">Awaiting approval</button>
-          <button class="filter-chip" data-status="approved" aria-pressed="false">Approved</button>
-          <button class="filter-chip" data-status="rejected" aria-pressed="false">Rejected</button>
-        </div>
-        <div class="filter-bar" id="risk-filters" role="group" aria-label="Filter by risk">
-          <button class="filter-chip" data-risk="all" aria-pressed="true">Any risk</button>
-          <button class="filter-chip" data-risk="high" aria-pressed="false">High</button>
-          <button class="filter-chip" data-risk="medium" aria-pressed="false">Medium</button>
-          <button class="filter-chip" data-risk="low" aria-pressed="false">Low</button>
+        <!-- Global Live Metric Stat Strip -->
+        <div class="stat-strip" id="stat-strip" style="margin-bottom:1.75rem;">
+          <div class="stat-box">
+            <span class="stat-box__num" id="stat-infra-health">100%</span>
+            <span class="stat-box__label">Infra Health Index</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__num" id="stat-active-incidents" style="color: var(--accent);">0</span>
+            <span class="stat-box__label">Active Incidents</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__num" id="stat-pending-approvals" style="color: #f59e0b;">0</span>
+            <span class="stat-box__label">Awaiting Approval</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__num" id="stat-avg-mttd" style="color: #38bdf8;">2.8s</span>
+            <span class="stat-box__label">Mean Time to Detect (MTTD)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__num" id="stat-avg-mttr" style="color: #35d68f;">5.4s</span>
+            <span class="stat-box__label">Mean Time to Recover (MTTR)</span>
+          </div>
         </div>
 
-        <div id="admin-reports-list" class="stack">
-          <p class="text-faint">Loading reports…</p>
+        <!-- Navigation Tabs -->
+        <div class="admin-tabs" role="tablist" aria-label="AIOps Sections">
+          <button class="admin-tab-btn active" data-tab="topology" role="tab" aria-selected="true">
+            🌐 Live Campus Topology
+          </button>
+          <button class="admin-tab-btn" data-tab="faults" role="tab" aria-selected="false">
+            ⚡ Fault Injection Console <span id="badge-fault-count" class="badge badge--risk-high" style="padding:0.1em 0.5em; font-size:0.7rem;">13 Scenarios</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="incidents" role="tab" aria-selected="false">
+            🚨 Incidents &amp; Student Reports <span id="badge-incident-count" class="badge" style="padding:0.1em 0.5em; font-size:0.7rem;">0</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="approvals" role="tab" aria-selected="false">
+            🛡️ Approvals &amp; Self-Healing
+          </button>
+          <button class="admin-tab-btn" data-tab="ai-matrix" role="tab" aria-selected="false">
+            🧠 Hybrid AI Decision Inspector
+          </button>
+          <button class="admin-tab-btn" data-tab="work-orders" role="tab" aria-selected="false">
+            🔧 Facilities Work Orders
+          </button>
+          <button class="admin-tab-btn" data-tab="evidence" role="tab" aria-selected="false">
+            📸 Photo Evidence Gallery
+          </button>
+          <button class="admin-tab-btn" data-tab="metrics" role="tab" aria-selected="false">
+            📊 Real MTTD / MTTR Metrics
+          </button>
+          <button class="admin-tab-btn" data-tab="audit" role="tab" aria-selected="false">
+            📜 Unified Audit Trail
+          </button>
         </div>
+
+        <!-- ===================================================================
+             TAB 1: LIVE CAMPUS TOPOLOGY
+             =================================================================== -->
+        <div id="pane-topology" class="admin-tab-pane">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Infrastructure Telemetry Graph</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Live state of all mission-critical digital systems, power, water, and student facilities.</p>
+            </div>
+            <span class="text-faint" style="font-size: 0.8rem;">Auto-updates on state mutation</span>
+          </div>
+
+          <div class="topology-grid" id="topology-grid">
+            <!-- Rendered by admin.js -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 2: FAULT INJECTION CONSOLE
+             =================================================================== -->
+        <div id="pane-faults" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Operational Fault Injection Console</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Trigger real-world fault simulations across Digital, Physical, and Safety systems. Each injection mutates live state, starts MTTD detection timers, computes Hybrid Priority, and generates recovery candidates.
+            </p>
+          </div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: var(--accent); margin: 0;">🌐 Digital Infrastructure Faults (Auto Self-Healable via Sandbox &amp; Two-Stage Approval)</h3>
+            <span class="badge badge--risk-medium">7 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-digital"></div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: #f59e0b; margin: 0;">💧 Physical Infrastructure Incidents (Dispatches Facilities &amp; Civil Work Orders)</h3>
+            <span class="badge badge--risk-medium">3 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-physical"></div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: #ef4444; margin: 0;">🍱 Mess Food, Water &amp; Health Safety (Urgent Human Inspection &amp; Quotas)</h3>
+            <span class="badge badge--risk-high">3 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-safety"></div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 3: INCIDENTS & STUDENT REPORTS
+             =================================================================== -->
+        <div id="pane-incidents" class="admin-tab-pane" hidden>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Active Incidents &amp; Student Ingest Stream</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Correlated telemetry, multi-student report clustering, and live status.</p>
+            </div>
+            
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <div class="filter-bar" id="status-filters" role="group" aria-label="Filter by status" style="margin:0;">
+                <button class="filter-chip" data-status="all" aria-pressed="true">All</button>
+                <button class="filter-chip" data-status="pending" aria-pressed="false">Pending / Detected</button>
+                <button class="filter-chip" data-status="in_review" aria-pressed="false">Awaiting Approval</button>
+                <button class="filter-chip" data-status="approved" aria-pressed="false">Approved</button>
+                <button class="filter-chip" data-status="resolved" aria-pressed="false">Resolved</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="admin-reports-list" class="stack">
+            <p class="text-faint">Loading incidents…</p>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 4: APPROVALS & SELF-HEALING CONTROLLER
+             =================================================================== -->
+        <div id="pane-approvals" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Self-Healing Controller &amp; Human Approval Queue</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Enforcing Human Governance Gate: AI sandbox rehearses fixes on cloned state, requiring warden approval + final confirmation warning before live execution.
+            </p>
+          </div>
+
+          <div id="approval-queue-list" class="stack">
+            <!-- Populated by admin.js -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 5: HYBRID AI DECISION INSPECTOR
+             =================================================================== -->
+        <div id="pane-ai-matrix" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Hybrid Decision Engine vs. Neural Network Inspector</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Understanding how LifeLine combines raw Neural Network predictions with 7 real-time context factors (service criticality, student impact, users affected, safety risk, location scope, live infra status, and report correlation) to formulate operational decisions.
+            </p>
+          </div>
+
+          <div class="card card--tight" style="margin-bottom: 1.5rem; background: var(--surface);">
+            <h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem;">⚖️ Decision Engine Framework</h3>
+            <p style="font-size: 0.88rem; margin-bottom: 0.85rem;">
+              <em>"The Neural Network assists incident classification, while LifeLine combines ML predictions with infrastructure evidence, student impact, and safety rules to make operational decisions."</em>
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; font-size: 0.82rem;">
+              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
+                <strong>1. Neural Network Input (25%)</strong>
+                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">TF-IDF text vector + one-hot category into Multi-Layer Perceptron (MLP) producing Softmax probabilities.</p>
+              </div>
+              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
+                <strong>2. Service Criticality (25%)</strong>
+                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Asset Tier scoring: Website/Portal/Water (Tier 5), LMS/Hostel Network (Tier 4), Single Room (Tier 2).</p>
+              </div>
+              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
+                <strong>3. Student Impact (20%)</strong>
+                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Headcount scaling: 4,000+ campus users vs. 450 hostel residents vs. single room.</p>
+              </div>
+              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
+                <strong>4. Safety &amp; Telemetry (30%)</strong>
+                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Physical fire/spark/health hazards + live DOWN status + multi-student report clusters.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="ai-breakdown-container" class="stack">
+            <!-- Populated by admin.js with active and historic evaluations -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 6: FACILITIES & PHYSICAL WORK ORDERS
+             =================================================================== -->
+        <div id="pane-work-orders" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Physical Facilities &amp; Maintenance Work Orders</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+                Tracking non-digital issues (Plumbing, Electrical, Structural, Water Filter, Food Safety) across the maintenance dispatch lifecycle.
+              </p>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="work-orders-table" id="work-orders-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Incident / Title</th>
+                  <th>Department</th>
+                  <th>Priority</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Lifecycle Action</th>
+                </tr>
+              </thead>
+              <tbody id="work-orders-tbody">
+                <!-- Populated by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 7: PHOTO EVIDENCE GALLERY
+             =================================================================== -->
+        <div id="pane-evidence" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Admin Photo &amp; Hazard Evidence Gallery</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Visual submissions from students and inspectors, complete with timestamp, location, and correlated incident metadata.
+            </p>
+          </div>
+
+          <div class="evidence-grid" id="evidence-grid">
+            <!-- Populated by admin.js -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 8: REAL MTTD / MTTR METRICS
+             =================================================================== -->
+        <div id="pane-metrics" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Real-Time Operational Performance &amp; SLA Tracking</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Mean Time to Detect (MTTD) and Mean Time to Recover (MTTR) calculated in real time from live incident timestamps (never hardcoded).
+            </p>
+          </div>
+
+          <div class="metrics-dashboard-grid">
+            <div class="metric-hero">
+              <div class="metric-hero__label">Mean Time to Detect (MTTD)</div>
+              <div class="metric-hero__num" id="metric-hero-mttd">2.8s</div>
+              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">AIOps telemetry anomaly detection speed</p>
+            </div>
+            <div class="metric-hero">
+              <div class="metric-hero__label">Mean Time to Recover (MTTR)</div>
+              <div class="metric-hero__num" id="metric-hero-mttr">5.4s</div>
+              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">Self-healing execution to verified health</p>
+            </div>
+            <div class="metric-hero">
+              <div class="metric-hero__label">Total Incidents Handled</div>
+              <div class="metric-hero__num" id="metric-hero-total" style="color:var(--text);">0</div>
+              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">Across session lifecycle</p>
+            </div>
+          </div>
+
+          <div class="grid grid--auto" style="gap: 1.5rem;">
+            <div class="card">
+              <h3 style="font-size:1rem; margin-bottom:0.75rem;">⏱️ MTTD Detection Log History</h3>
+              <div id="mttd-history-list" class="metric-history-list"></div>
+            </div>
+            <div class="card">
+              <h3 style="font-size:1rem; margin-bottom:0.75rem;">⚡ MTTR Recovery Log History</h3>
+              <div id="mttr-history-list" class="metric-history-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 9: UNIFIED AUDIT TRAIL
+             =================================================================== -->
+        <div id="pane-audit" class="admin-tab-pane" hidden>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Comprehensive System &amp; Governance Audit Trail</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+                Immutable chronological ledger recording all lifecycle events: Injected, Detected, Reported, Analyzed, Sandboxed, Approved, Confirmed, Recovered, and Verified.
+              </p>
+            </div>
+            <button id="btn-clear-audit" class="btn btn--ghost btn--sm" style="font-size:0.8rem;">Export / Archive</button>
+          </div>
+
+          <div class="card card--tight">
+            <div id="unified-audit-list" class="stack">
+              <!-- Populated by admin.js -->
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
 
+  <!-- ===================================================================
+       TWO-STAGE CONFIRMATION MODAL (FINAL WARNING)
+       =================================================================== -->
+  <div id="modal-confirm-selfhealing" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span class="eyebrow" style="color: #f59e0b; margin: 0;">Stage 2 Human Confirmation</span>
+        <span class="badge badge--risk-high">FINAL OPERATIONAL WARNING</span>
+      </div>
+      <h2 id="modal-incident-title" style="font-size: 1.35rem; margin-bottom: 0.5rem;">Confirm Self-Healing Execution</h2>
+      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 1rem;">
+        Authority approval was granted. Please review the live remediation parameters before triggering changes on live production infrastructure.
+      </p>
+
+      <div class="modal-warning-box">
+        <span style="font-size: 1.4rem;" aria-hidden="true">⚠️</span>
+        <div>
+          <strong style="color: #fde68a; display: block; margin-bottom: 0.25rem;">Operational Impact Disclaimer:</strong>
+          <p>
+            Executing this playbook will immediately recycle worker containers and re-negotiate routing tables. Live traffic may experience a brief 3-5 second socket re-bind.
+          </p>
+        </div>
+      </div>
+
+      <div style="background: var(--bg-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span class="text-faint">Target Subsystem:</span>
+          <strong id="modal-target-service">—</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span class="text-faint">Operational Priority:</span>
+          <span id="modal-priority-badge" class="badge badge--risk-high">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span class="text-faint">Estimated Recovery Duration:</span>
+          <strong id="modal-est-duration">~5.0s</strong>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.35rem;">
+          <span class="text-faint">Executing Remediation Playbook:</span>
+          <code id="modal-remediation-code" style="background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 4px; color: var(--accent); font-size: 0.78rem;">—</code>
+        </div>
+      </div>
+
+      <!-- Live Execution Progress (Hidden until confirm clicked) -->
+      <div id="modal-execution-progress" style="margin-top: 1.25rem;" hidden>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem;">
+          <span id="modal-progress-status" style="color: var(--accent);">Executing Self-Healing...</span>
+          <span id="modal-progress-pct">0%</span>
+        </div>
+        <div style="height: 8px; background: var(--bg-alt); border-radius: 4px; overflow: hidden; border: 1px solid var(--border);">
+          <div id="modal-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions" id="modal-actions-buttons">
+        <button type="button" class="btn btn--ghost" id="modal-btn-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="modal-btn-execute" style="background: #10b981; border-color: #10b981; color: #04100c;">
+          ⚡ EXECUTE SELF-HEALING NOW
+        </button>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+    <div class="container">LifeLine by Cognora — Self-Healing AIOps Controller (SOAIDEATHON-S3).</div>
   </footer>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/campus-state.js"></script>
   <script src="js/model/risk-model.js"></script>
   <script src="js/nn-inference.js"></script>
   <script src="js/ai-engine.js"></script>

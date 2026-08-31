@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LifeLine by Cognora — Self-Healing Hostel Ops Controller</title>
-  <meta name="description" content="LifeLine by Cognora is a human-governed AI Ops platform for hostel infrastructure — students report issues, an AI engine simulates and ranks fixes in a sandbox, and wardens approve high-impact actions.">
+  <title>LifeLine by Cognora — Self-Healing Campus AIOps Controller</title>
+  <meta name="description" content="LifeLine is a human-governed AIOps platform for campus digital and physical infrastructure. Combines Neural Network classification, Hybrid Operational Priority, Sandbox simulation, and Two-Stage Self-Healing.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,9 +18,9 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="index.html" aria-current="page">Home</a>
-        <a href="login.html">Student Login</a>
-        <a href="register.html">Register</a>
-        <a href="admin-login.html">Warden / Staff</a>
+        <a href="report.html">Student Report</a>
+        <a href="admin.html">Warden Ops Dashboard</a>
+        <a href="admin-login.html">Staff Login</a>
       </nav>
     </div>
   </header>
@@ -28,16 +28,51 @@
   <main id="main-content">
     <section class="hero">
       <div class="container">
-        <p class="eyebrow">SOAIDEATHON-S3 · Human-Governed AIOps</p>
-        <h1>Self-healing operations for your hostel — with a human always in the loop.</h1>
+        <p class="eyebrow">SOAIDEATHON-S3 · Human-Governed Campus AIOps Platform</p>
+        <h1>Self-Healing Operations for Campus Digital &amp; Physical Infrastructure</h1>
         <p class="lede">
-          LifeLine correlates what students report with facility signals, simulates recovery
-          playbooks in a sandbox before anything touches real systems, ranks risk, and routes
-          every high-impact action to a warden for explicit approval.
+          LifeLine combines a client-side Neural Network with multi-tier infrastructure telemetry, student impact scoring, and safety rules. Rehearses playbooks in an isolated sandbox and requires two-stage human confirmation before live self-healing.
         </p>
-        <div class="cluster" style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1.5rem;">
-          <a class="btn btn--primary" href="register.html">Register as a student</a>
-          <a class="btn btn--ghost" href="admin-login.html">Warden / staff login</a>
+        <div class="cluster" style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1.75rem;">
+          <a class="btn btn--primary" href="admin.html" style="box-shadow: 0 0 20px -4px var(--accent);">🚀 Launch Warden Ops Console</a>
+          <a class="btn btn--ghost" href="report.html">📝 Student Intake Portal</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Live Campus Infrastructure Status Teaser -->
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="card" style="border: 1px solid var(--border); background: var(--surface);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span class="eyebrow" style="margin:0;">Live Telemetry Stream</span>
+              <h3 style="margin: 0.25rem 0 0; font-size: 1.1rem;">Campus Node Health Monitor</h3>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <span class="badge badge--risk-low">● 10 Nodes Online</span>
+              <a href="admin.html" class="btn btn--ghost btn--sm" style="font-size:0.78rem;">Open Full Topology →</a>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 0.75rem; font-size: 0.85rem;">
+            <div style="background: var(--bg-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
+              <span>🌐 Web Gateway</span>
+              <span style="color:#35d68f; font-weight:700;">HEALTHY</span>
+            </div>
+            <div style="background: var(--bg-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
+              <span>🎓 Student ERP</span>
+              <span style="color:#35d68f; font-weight:700;">HEALTHY</span>
+            </div>
+            <div style="background: var(--bg-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
+              <span>📡 Wi-Fi Mesh</span>
+              <span style="color:#35d68f; font-weight:700;">HEALTHY</span>
+            </div>
+            <div style="background: var(--bg-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
+              <span>💧 Water Systems</span>
+              <span style="color:#35d68f; font-weight:700;">HEALTHY</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -47,38 +82,42 @@
         <div class="grid grid--auto">
           <div class="card">
             <div class="card-grid-icon" aria-hidden="true">01</div>
-            <h3>Report</h3>
-            <p>Students log in, pick a category, describe what happened and where, and attach a photo — in under a minute.</p>
+            <h3>1. Multi-Modal Ingest</h3>
+            <p>Students and automated telemetry submit faults with photo evidence across Digital, Physical, and Dining Safety categories.</p>
           </div>
           <div class="card">
             <div class="card-grid-icon" aria-hidden="true">02</div>
-            <h3>Sandbox &amp; Rank</h3>
-            <p>Every report runs through a live sandbox console that correlates signals, simulates a recovery playbook, and computes a risk score — before anything is executed for real.</p>
+            <h3>2. Hybrid Priority Engine</h3>
+            <p>Fuses Neural Network text embeddings with Service Criticality (Tier 1-5), user scale, safety risk, and multi-report clusters into actionable P1-P4 priorities.</p>
           </div>
           <div class="card">
             <div class="card-grid-icon" aria-hidden="true">03</div>
-            <h3>Approve</h3>
-            <p>Low-risk fixes are logged for routine action. Medium and high-risk recommendations wait for a warden's explicit approval, with a full audit trail.</p>
+            <h3>3. Cloned Sandbox Rehearsal</h3>
+            <p>Simulates candidate remediation playbooks against a cloned state copy (<code style="color:var(--accent);">structuredClone</code>) before touching production systems.</p>
+          </div>
+          <div class="card">
+            <div class="card-grid-icon" aria-hidden="true">04</div>
+            <h3>4. Two-Stage Human Gate</h3>
+            <p>Requires Authority Approval and a separate Final Warning confirmation before executing digital self-healing (transitioning DOWN → RECOVERING → HEALTHY).</p>
+          </div>
+          <div class="card">
+            <div class="card-grid-icon" aria-hidden="true">05</div>
+            <h3>5. Physical &amp; Safety Escalation</h3>
+            <p>Non-digital issues (Plumbing, Electrical, Water Purifier, Food Safety) trigger dispatch work orders with full lifecycle status tracking.</p>
+          </div>
+          <div class="card">
+            <div class="card-grid-icon" aria-hidden="true">06</div>
+            <h3>6. Real MTTD / MTTR Metrics</h3>
+            <p>Measures actual detection and recovery timestamps with running performance trends and an immutable audit trail.</p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container container--narrow" style="text-align:center;">
-        <h2>Built for continuity, even when sensors go dark</h2>
-        <p>
-          LifeLine is designed to keep producing useful diagnostics even when some sensors or
-          services are unavailable — degrading gracefully instead of failing silently, so wardens
-          always have something actionable to work with.
-        </p>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      LifeLine by Cognora — SOAIDEATHON-S3 demo build. Not connected to live campus infrastructure.
+      LifeLine by Cognora — SOAIDEATHON-S3 Campus AIOps Controller.
     </div>
   </footer>
 </body>
