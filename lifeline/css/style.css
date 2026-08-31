@@ -163,6 +163,43 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .btn--danger { background: transparent; color: var(--risk-high); border-color: rgba(255, 93, 108, 0.4); }
 .btn--danger:hover { background: var(--risk-high-bg); }
 
+.btn--google {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  transition: all var(--transition);
+}
+.btn--google:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #111827;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.25rem 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.auth-divider::before, .auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border-soft);
+}
+.auth-divider span {
+  padding: 0 0.75rem;
+}
+
 .btn--block { width: 100%; }
 .btn--sm { min-height: 2.2rem; padding: 0.45em 1em; font-size: 0.82rem; }
 
@@ -999,4 +1036,136 @@ input[type="file"] {
 @keyframes pulse-border {
   0%, 100% { border-color: rgba(255, 93, 108, 0.45); }
   50% { border-color: rgba(255, 93, 108, 0.9); box-shadow: 0 0 12px rgba(255, 93, 108, 0.35); }
+}
+
+/* ==========================================================================
+   CCTV SURVEILLANCE & CROSS-CHECKING CONSOLE (Staff/Authority Only)
+   ========================================================================== */
+.cctv-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.cctv-feed-card {
+  background: #060a0f;
+  border: 1px solid #1e293b;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.cctv-feed-card.selected-feed {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+}
+
+.cctv-screen-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #020617;
+  overflow: hidden;
+}
+
+.cctv-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cctv-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.35) 50%
+  );
+  background-size: 100% 4px;
+  z-index: 2;
+}
+
+.cctv-overlay-top {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #38bdf8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+
+.cctv-rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #ef4444;
+  font-weight: 700;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.cctv-overlay-bottom {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+
+.cctv-feed-footer {
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.cctv-ptz-bar {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cctv-ptz-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.cctv-ptz-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.cctv-crosscheck-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
 }

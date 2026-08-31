@@ -307,18 +307,55 @@ async function runSandbox(report, initialAudit) {
   CampusStateEngine.saveIncidents(incidents);
   CampusStateEngine.logAuditEvent("STUDENT_REPORT_INGESTED", currentProfile.name, `Submitted report: ${report.category}`, `Assigned Priority: ${newIncident.operationalPriority}`);
 
-  // Also create Physical Work Order if non-digital
-  if (!analysis.isDigital) {
+  // If physical/non-digital, automatically mail the designated authority officer
+  const emailBox = document.getElementById("email-dispatch-box");
+  const emailDetails = document.getElementById("email-dispatch-details");
+
+  if (!analysis.isDigital && CampusStateEngine.dispatchPhysicalAuthorityEmail) {
+    const emailResult = CampusStateEngine.dispatchPhysicalAuthorityEmail({
+      incidentId: newIncident.id,
+      title: newIncident.title,
+      category: report.category,
+      priority: newIncident.operationalPriority,
+      location: report.location,
+      studentName: currentProfile.name,
+      studentRoom: `${currentProfile.bh_number || 'BH-1'}, Room ${currentProfile.room_number || '101'}`,
+      description: report.description,
+      rootCause: analysis.reasoning,
+      solution: analysis.solution
+    });
+
+    if (emailBox && emailDetails) {
+      emailBox.style.display = "block";
+      emailDetails.innerHTML = `
+        <div style="display:grid; grid-template-columns:auto 1fr; gap:0.25rem 0.6rem; margin-top:0.35rem;">
+          <span style="color:var(--text-faint);">Dispatched To:</span>
+          <strong>${emailResult.toOfficer} (${emailResult.toDesignation})</strong>
+          <span style="color:var(--text-faint);">Official Email:</span>
+          <code style="color:var(--accent);">${emailResult.toEmail}</code>
+          <span style="color:var(--text-faint);">Department:</span>
+          <span>${emailResult.department} (${emailResult.phoneExt})</span>
+          <span style="color:var(--text-faint);">Response SLA:</span>
+          <span style="color:#10b981; font-weight:700;">${emailResult.sla}</span>
+        </div>
+      `;
+    }
+
+    // Also create Physical Work Order with linked email record
     CampusStateEngine.createWorkOrder({
       title: `${formatCategory(report.category)} at ${report.location}`,
       category: report.category,
       priority: newIncident.operationalPriority,
       location: report.location,
-      description: report.description
+      description: report.description,
+      dispatchedEmailId: emailResult.id
     });
-  }
 
-  showToast("Report simulated in sandbox and routed to Warden Ops Dashboard.", "success");
+    showToast(`Physical issue analyzed & work order auto-emailed to ${emailResult.toOfficer}.`, "success");
+  } else {
+    if (emailBox) emailBox.style.display = "none";
+    showToast("Report simulated in sandbox and routed to Warden Ops Dashboard.", "success");
+  }
 }
 
 // ----------------------------------------------------------------------------

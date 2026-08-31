@@ -1,19 +1,42 @@
 // ============================================================================
-// LifeLine by Cognora — Supabase client
-// ----------------------------------------------------------------------------
-// Fill in your project's URL and anon key below. Find them in your Supabase
-// project: Settings -> API -> "Project URL" and "anon public" key.
-// The anon key is safe to expose in frontend code — access is controlled by
-// the Row Level Security policies in supabase/schema.sql.
+// LifeLine by Cognora — Supabase client, Environment & Role-Separated Auth Guard
 // ============================================================================
 
-const SUPABASE_URL = "https://nxqujcjaxykvcgmmzbvd.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cXVqY2pheHlrdmNnbW16YnZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwODYyOTUsImV4cCI6MjEwMzY2MjI5NX0.2FQAYV8wh2uVKjMi2dvmsHbKaZbiZUrJWbulp6YWpZo";
+let SUPABASE_URL = "https://nxqujcjaxykvcgmmzbvd.supabase.co";
+let SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cXVqY2pheHlrdmNnbW16YnZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwODYyOTUsImV4cCI6MjEwMzY2MjI5NX0.2FQAYV8wh2uVKjMi2dvmsHbKaZbiZUrJWbulp6YWpZo";
 
-// The Supabase JS SDK is loaded via CDN script tag in each HTML page
-// (see the <script src="https://unpkg.com/@supabase/supabase-js@2..."> tag),
-// which exposes the global `supabase` factory used below.
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (typeof window !== "undefined") {
+  window.LIFE_LINE_CONFIG = {
+    googleClientId: "",
+    googleRedirectUri: window.location.origin + "/api/auth/google/callback",
+    supabaseUrl: SUPABASE_URL,
+    supabaseAnonKey: SUPABASE_ANON_KEY,
+    nodeEnv: "development"
+  };
+
+  async function initAppConfig() {
+    if (window.location.protocol.startsWith("http")) {
+      try {
+        const res = await fetch("/api/config");
+        if (res.ok) {
+          const cfg = await res.json();
+          window.LIFE_LINE_CONFIG = { ...window.LIFE_LINE_CONFIG, ...cfg };
+          if (cfg.supabaseUrl && cfg.supabaseUrl !== SUPABASE_URL) {
+            SUPABASE_URL = cfg.supabaseUrl;
+          }
+          if (cfg.supabaseAnonKey && cfg.supabaseAnonKey !== SUPABASE_ANON_KEY) {
+            SUPABASE_ANON_KEY = cfg.supabaseAnonKey;
+          }
+        }
+      } catch (e) {}
+    }
+  }
+  initAppConfig();
+}
+
+const sb = (typeof window !== "undefined" && window.supabase && typeof window.supabase.createClient === "function")
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 const CATEGORIES = [
   { id: "electrical", label: "Electrical", emoji: "⚡" },
@@ -27,9 +50,6 @@ const CATEGORIES = [
   { id: "other", label: "Other", emoji: "❓" },
 ];
 
-// ----------------------------------------------------------------------------
-// Small shared helpers
-// ----------------------------------------------------------------------------
 function fmtTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -69,86 +89,61 @@ function showToast(message, type = "info") {
   setTimeout(() => toast.remove(), 5000);
 }
 
-// Check for local demo / evaluator session
-function getDemoSession() {
+const STORAGE_KEY_STUDENT = "lifeline_student_session";
+const STORAGE_KEY_STAFF = "lifeline_staff_session";
+
+function getStudentSession() {
   try {
-    const raw = localStorage.getItem("lifeline_demo_session");
-    if (raw) return JSON.parse(raw);
+    const raw = localStorage.getItem(STORAGE_KEY_STUDENT);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.profile && parsed.profile.role === "student") return parsed;
+    }
   } catch (e) {}
   return null;
 }
 
-function setDemoSession(role = "admin", name = "Chief Warden / Ops Lead") {
-  const sess = {
-    user: { id: "demo-user-" + role, email: `${role}@lifeline.campus` },
-    profile: {
-      id: "demo-user-" + role,
-      name,
-      email: `${role}@lifeline.campus`,
-      role,
-      bh_number: "BH-1",
-      room_number: "101",
-      phone: "9876543210"
-    }
-  };
-  localStorage.setItem("lifeline_demo_session", JSON.stringify(sess));
-  return sess;
+function setStudentSession(session) {
+  localStorage.setItem(STORAGE_KEY_STUDENT, JSON.stringify(session));
 }
 
-// Requires a logged-in session; redirects to login.html otherwise.
-// Returns { user, profile }.
-async function requireAuth() {
+function clearStudentSession() {
+  localStorage.removeItem(STORAGE_KEY_STUDENT);
+}
+
+function getStaffSession() {
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      const { data: profile, error } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-      if (!error && profile) {
-        return { user: session.user, profile };
-      }
+    const raw = localStorage.getItem(STORAGE_KEY_STAFF);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.profile && parsed.profile.role === "admin") return parsed;
     }
-  } catch (err) {
-    console.warn("Supabase auth check fallback:", err);
-  }
+  } catch (e) {}
+  return null;
+}
 
-  // Check demo session
-  const demo = getDemoSession();
-  if (demo && demo.profile) {
-    return demo;
-  }
+function setStaffSession(session) {
+  localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(session));
+}
 
-  // Not logged in -> redirect to student login
+function clearStaffSession() {
+  localStorage.removeItem(STORAGE_KEY_STAFF);
+}
+
+async function requireAuth() {
+  const student = getStudentSession();
+  if (student && student.profile && student.profile.role === "student") {
+    return student;
+  }
   window.location.href = "login.html";
   return null;
 }
 
 async function requireAdmin() {
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      const { data: profile } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-      if (profile && profile.role === "admin") {
-        return { user: session.user, profile };
-      }
-    }
-  } catch (err) {
-    console.warn("Supabase admin auth check fallback:", err);
+  const staff = getStaffSession();
+  if (staff && staff.profile && staff.profile.role === "admin") {
+    return staff;
   }
-
-  // Check demo session
-  const demo = getDemoSession();
-  if (demo && demo.profile && demo.profile.role === "admin") {
-    return demo;
-  }
-
-  // Not logged in as admin -> redirect to staff login
   window.location.href = "admin-login.html";
   return null;
 }
@@ -158,8 +153,11 @@ function wireLogoutButton() {
   if (!btn) return;
   btn.addEventListener("click", async (e) => {
     e.preventDefault();
-    localStorage.removeItem("lifeline_demo_session");
-    try { await sb.auth.signOut(); } catch (e) {}
+    clearStudentSession();
+    clearStaffSession();
+    if (sb && sb.auth) {
+      try { await sb.auth.signOut(); } catch (err) {}
+    }
     window.location.href = "index.html";
   });
 }

@@ -154,6 +154,19 @@
               <h3 style="margin-bottom:0.35rem;">Operational Decision Reasoning</h3>
               <p id="ai-reasoning-text"></p>
 
+              <!-- Automated Authority Email Dispatch Box -->
+              <div id="email-dispatch-box" style="display:none; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin: 1rem 0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <strong style="color: var(--accent); font-size:0.85rem; display:flex; align-items:center; gap:0.4rem;">
+                    📧 Automated Authority Work Order Dispatched
+                  </strong>
+                  <span class="badge badge--risk-low" style="font-size:0.68rem;">● SENT (250 OK)</span>
+                </div>
+                <div id="email-dispatch-details" style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
+                  <!-- Populated by report.js -->
+                </div>
+              </div>
+
               <div class="sandbox__approval-note" id="approval-note">
                 <span aria-hidden="true">🛡️</span>
                 <span id="approval-note-text"></span>

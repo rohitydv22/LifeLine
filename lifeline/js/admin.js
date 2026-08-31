@@ -4,8 +4,7 @@
 
 let adminUser = null;
 let adminProfile = null;
-let currentTab = "topology";
-let pendingModalIncident = null;
+let currentTab = "incidents";
 let filterStatus = "all";
 
 (async function init() {
@@ -17,7 +16,6 @@ let filterStatus = "all";
   wireLogoutButton();
   wireTabs();
   wireQuickReset();
-  wireConfirmationModal();
   wireFilterChips();
 
   // Initial Render of All Sections
@@ -41,6 +39,7 @@ function renderAllViews() {
   renderWorkOrders();
   renderEvidenceGallery();
   renderMetricsDashboard();
+  renderCctvSurveillance();
   renderUnifiedAuditTrail();
 }
 
@@ -349,11 +348,30 @@ function renderIncidentsList() {
       }, "🛡️ Grant Authority Approval"));
     } else if (inc.status === "APPROVED") {
       if (inc.isDigital) {
+        // Render Stage 2 Operational Impact Disclaimer inline inside the card
+        const disclaimerBox = el("div", {
+          style: "margin: 0.75rem 0; padding: 0.75rem 1rem; border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.08); border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.25);"
+        }, [
+          el("div", { style: "display:flex; align-items:flex-start; gap:0.6rem;" }, [
+            el("span", { style: "font-size:1.25rem;" }, "⚠️"),
+            el("div", { style: "flex:1;" }, [
+              el("strong", { style: "color:#fde68a; font-size:0.82rem; display:block; margin-bottom:0.25rem;" }, "Stage 2 Operational Impact Disclaimer:"),
+              el("p", { style: "margin:0 0 0.35rem; font-size:0.8rem; color:var(--text-muted);" }, 
+                "Executing this playbook will recycle worker containers and re-negotiate routing tables. Live traffic may experience a brief 3-5 second socket re-bind."
+              ),
+              el("div", { style: "font-size:0.75rem; color:var(--text-faint);" }, 
+                `Target: ` + inc.target + ` | Priority: ` + inc.operationalPriority + ` | Est. Recovery: ~5.0s`
+              )
+            ])
+          ])
+        ]);
+        row.appendChild(disclaimerBox);
+
         actionsWrap.appendChild(el("button", {
           class: "btn btn--sm",
-          style: "background:#10b981; color:#051610; font-weight:800;",
-          onclick: () => openSelfHealingConfirmationModal(inc.id)
-        }, "⚡ Confirm & Execute Self-Healing"));
+          style: "background:#10b981; color:#04140c; font-weight:800;",
+          onclick: (e) => executeInlineSelfHealing(inc.id, e.target)
+        }, "⚡ Execute Live Self-Healing Now"));
       } else {
         actionsWrap.appendChild(el("span", { class: "badge badge--risk-medium" }, "Work Order Dispatched to Physical Facilities"));
       }
@@ -379,10 +397,45 @@ function runSandboxForIncident(incidentId) {
 function grantApprovalForIncident(incidentId) {
   try {
     CampusStateEngine.approveIncidentRecovery(incidentId, adminProfile ? adminProfile.name : "Warden / Operations Lead");
-    showToast("Authority Approval granted. Final Confirmation Warning unlocked.", "success");
+    showToast("Authority Approval granted. Operational Impact Disclaimer displayed.", "success");
     renderAllViews();
   } catch (e) {
     showToast("Approval error: " + e.message, "error");
+  }
+}
+
+async function executeInlineSelfHealing(incidentId, triggerBtn) {
+  if (!triggerBtn) return;
+  const parent = triggerBtn.parentElement;
+  
+  // Replace button with animated progress bar
+  const progressWrap = el("div", { style: "width:100%; max-width:24rem; margin-top:0.4rem;" });
+  const statusLine = el("div", { style: "display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:0.25rem; color:var(--accent);" }, [
+    el("span", {}, "Initializing Self-Healing..."),
+    el("span", {}, "0%")
+  ]);
+  const barWrap = el("div", { style: "height:8px; background:var(--bg-alt); border-radius:4px; overflow:hidden; border:1px solid var(--border);" });
+  const bar = el("div", { style: "height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #10b981); transition:width 0.3s ease;" });
+  barWrap.appendChild(bar);
+  progressWrap.appendChild(statusLine);
+  progressWrap.appendChild(barWrap);
+
+  parent.replaceChild(progressWrap, triggerBtn);
+
+  try {
+    const res = await CampusStateEngine.executeSelfHealing(incidentId, (prog) => {
+      bar.style.width = `${prog.percent}%`;
+      statusLine.children[0].textContent = prog.message;
+      statusLine.children[1].textContent = `${prog.percent}%`;
+    });
+
+    showToast(`Self-healing completed! System recovered to HEALTHY in ${res.mttrSeconds}s.`, "success");
+    setTimeout(() => {
+      renderAllViews();
+    }, 800);
+  } catch (err) {
+    showToast("Execution error: " + err.message, "error");
+    renderAllViews();
   }
 }
 
@@ -415,6 +468,26 @@ function renderApprovalQueue() {
       el("strong", {}, "Recovery Action: "), inc.recommendedAction
     ]));
 
+    if (inc.status === "APPROVED" && inc.isDigital) {
+      const disclaimerBox = el("div", {
+        style: "margin: 0.75rem 0; padding: 0.75rem 1rem; border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.08); border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.25);"
+      }, [
+        el("div", { style: "display:flex; align-items:flex-start; gap:0.6rem;" }, [
+          el("span", { style: "font-size:1.25rem;" }, "⚠️"),
+          el("div", { style: "flex:1;" }, [
+            el("strong", { style: "color:#fde68a; font-size:0.82rem; display:block; margin-bottom:0.25rem;" }, "Stage 2 Operational Impact Disclaimer:"),
+            el("p", { style: "margin:0 0 0.35rem; font-size:0.8rem; color:var(--text-muted);" }, 
+              "Executing this playbook will recycle worker containers and re-negotiate routing tables. Live traffic may experience a brief 3-5 second socket re-bind."
+            ),
+            el("div", { style: "font-size:0.75rem; color:var(--text-faint);" }, 
+              `Target: ` + inc.target + ` | Priority: ` + inc.operationalPriority + ` | Est. Recovery: ~5.0s`
+            )
+          ])
+        ])
+      ]);
+      card.appendChild(disclaimerBox);
+    }
+
     const actions = el("div", { style: "display:flex; gap:0.75rem; margin-top:1rem;" });
     if (inc.status === "SANDBOXED") {
       actions.appendChild(el("button", {
@@ -422,78 +495,18 @@ function renderApprovalQueue() {
         onclick: () => grantApprovalForIncident(inc.id)
       }, "✅ Approve Remediation Playbook"));
     } else if (inc.status === "APPROVED") {
-      actions.appendChild(el("button", {
-        class: "btn btn--sm",
-        style: "background:#10b981; color:#051610; font-weight:800;",
-        onclick: () => openSelfHealingConfirmationModal(inc.id)
-      }, "⚡ Stage 2: Final Warning & Live Execute"));
+      if (inc.isDigital) {
+        actions.appendChild(el("button", {
+          class: "btn btn--sm",
+          style: "background:#10b981; color:#04140c; font-weight:800;",
+          onclick: (e) => executeInlineSelfHealing(inc.id, e.target)
+        }, "⚡ Execute Live Self-Healing Now"));
+      }
     }
 
     card.appendChild(actions);
     container.appendChild(card);
   });
-}
-
-// ----------------------------------------------------------------------------
-// 6. TWO-STAGE CONFIRMATION MODAL
-// ----------------------------------------------------------------------------
-function wireConfirmationModal() {
-  const modal = document.getElementById("modal-confirm-selfhealing");
-  const cancelBtn = document.getElementById("modal-btn-cancel");
-  const executeBtn = document.getElementById("modal-btn-execute");
-
-  if (cancelBtn) cancelBtn.addEventListener("click", () => { modal.hidden = true; });
-
-  if (executeBtn) {
-    executeBtn.addEventListener("click", async () => {
-      if (!pendingModalIncident) return;
-
-      const progressWrap = document.getElementById("modal-execution-progress");
-      const progressBar = document.getElementById("modal-progress-bar");
-      const progressStatus = document.getElementById("modal-progress-status");
-      const progressPct = document.getElementById("modal-progress-pct");
-      const actionBtns = document.getElementById("modal-actions-buttons");
-
-      progressWrap.hidden = false;
-      actionBtns.hidden = true;
-
-      try {
-        await CampusStateEngine.executeSelfHealing(pendingModalIncident.id, (prog) => {
-          progressBar.style.width = `${prog.percent}%`;
-          progressPct.textContent = `${prog.percent}%`;
-          progressStatus.textContent = prog.message;
-        });
-
-        showToast(`🎉 Self-Healing Successful for ${pendingModalIncident.title}!`, "success");
-        setTimeout(() => {
-          modal.hidden = true;
-          progressWrap.hidden = true;
-          actionBtns.hidden = false;
-          renderAllViews();
-        }, 1200);
-      } catch (err) {
-        showToast("Execution error: " + err.message, "error");
-        actionBtns.hidden = false;
-      }
-    });
-  }
-}
-
-function openSelfHealingConfirmationModal(incidentId) {
-  const incidents = CampusStateEngine.loadIncidents();
-  const inc = incidents.find(i => i.id === incidentId);
-  if (!inc) return;
-
-  pendingModalIncident = inc;
-  const modal = document.getElementById("modal-confirm-selfhealing");
-
-  document.getElementById("modal-incident-title").textContent = inc.title;
-  document.getElementById("modal-target-service").textContent = inc.target;
-  document.getElementById("modal-priority-badge").textContent = inc.operationalPriority;
-  document.getElementById("modal-remediation-code").textContent = inc.recommendedAction;
-  document.getElementById("modal-est-duration").textContent = `~${CampusStateEngine.FAULT_SCENARIOS[inc.scenarioId]?.recoveryTimeSec || 5}.0s`;
-
-  modal.hidden = false;
 }
 
 // ----------------------------------------------------------------------------
@@ -584,6 +597,68 @@ function renderWorkOrders() {
 
     tr.appendChild(actionTd);
     tbody.appendChild(tr);
+  });
+
+  renderDispatchedEmailsLedger();
+}
+
+function renderDispatchedEmailsLedger() {
+  const container = document.getElementById("dispatched-emails-list");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const emails = CampusStateEngine.loadDispatchedEmails ? CampusStateEngine.loadDispatchedEmails() : [];
+  if (!emails.length) {
+    container.appendChild(el("div", { class: "empty-state" }, "No automated physical emails dispatched yet."));
+    return;
+  }
+
+  emails.forEach(email => {
+    const card = el("div", {
+      class: "card card--tight",
+      style: "background:var(--bg-alt); border-left:4px solid #38bdf8; padding:0.85rem 1rem;"
+    });
+
+    const top = el("div", { style: "display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.4rem;" }, [
+      el("div", {}, [
+        el("div", { style: "display:flex; align-items:center; gap:0.5rem; margin-bottom:0.15rem;" }, [
+          el("span", { class: "badge badge--risk-low", style: "font-size:0.65rem;" }, "● DELIVERED (250 OK)"),
+          el("span", { style: "font-size:0.75rem; font-family:var(--font-mono); color:var(--text-faint);" }, email.id)
+        ]),
+        el("strong", { style: "font-size:0.9rem; color:var(--text);" }, email.subject)
+      ]),
+      el("span", { style: "font-size:0.75rem; color:var(--text-faint);" }, fmtTime(email.timestamp))
+    ]);
+
+    const meta = el("div", { style: "display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap:0.4rem 1rem; font-size:0.8rem; margin:0.5rem 0; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm);" }, [
+      el("div", {}, [el("span", { class: "text-faint" }, "Officer: "), el("strong", {}, `${email.toOfficer} (${email.toDesignation})`)]),
+      el("div", {}, [el("span", { class: "text-faint" }, "Email: "), el("code", { style: "color:var(--accent);" }, email.toEmail)]),
+      el("div", {}, [el("span", { class: "text-faint" }, "Department: "), el("span", {}, email.department)]),
+      el("div", {}, [el("span", { class: "text-faint" }, "Response SLA: "), el("span", { style: "color:#10b981; font-weight:700;" }, email.sla)])
+    ]);
+
+    const body = el("div", { style: "font-size:0.8rem; color:var(--text-muted); line-height:1.45;" }, [
+      el("p", { style: "margin:0 0 0.35rem;" }, [el("strong", { style: "color:var(--text);" }, "AI Root Cause: "), email.aiRootCause]),
+      el("p", { style: "margin:0;" }, [el("strong", { style: "color:var(--text);" }, "Playbook Solution: "), email.aiSolution])
+    ]);
+
+    const footer = el("div", { style: "display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.4rem; border-top:1px solid var(--border-soft); font-size:0.75rem;" }, [
+      el("span", { class: "text-faint" }, `Relay: ${email.smtpCode || '250 2.0.0 OK'}`),
+      el("button", {
+        type: "button",
+        class: "btn btn--ghost btn--sm",
+        style: "font-size:0.75rem; padding:0.2rem 0.6rem; min-height:1.8rem;",
+        onclick: () => {
+          showToast(`Re-sent priority email alert to ${email.toEmail}.`, "success");
+        }
+      }, "🔄 Re-send Dispatch")
+    ]);
+
+    card.appendChild(top);
+    card.appendChild(meta);
+    card.appendChild(body);
+    card.appendChild(footer);
+    container.appendChild(card);
   });
 }
 
@@ -715,4 +790,332 @@ function renderSandboxLogMini(log) {
     ]));
   });
   return wrap;
+}
+
+// ----------------------------------------------------------------------------
+// 12. CCTV SURVEILLANCE & SAFETY CROSS-CHECKING (Staff & Authority Only)
+// ----------------------------------------------------------------------------
+const CCTV_CAMERAS = [
+  { id: "CAM-01", name: "Central Mess & Kitchen Area", zone: "Central Mess Hall", category: "mess_food", resolution: "1080p 30fps", temp: "23.8°C", motion: "Low Activity", nightVision: false, zoom: 1 },
+  { id: "CAM-02", name: "Hostel BH-1 Corridor & Washrooms", zone: "Hostel BH-1 (Floor 2)", category: "plumbing", resolution: "1080p 30fps", temp: "22.1°C", motion: "Occupancy Active", nightVision: false, zoom: 1 },
+  { id: "CAM-03", name: "Primary Server & Network Rack", zone: "IT Data Center", category: "digital", resolution: "1080p 60fps", temp: "19.4°C", motion: "Secure / Locked", nightVision: true, zoom: 1 },
+  { id: "CAM-04", name: "Hostel Security Main Turnstiles", zone: "BH-1 & BH-2 Gates", category: "security", resolution: "1080p 30fps", temp: "26.5°C", motion: "Entry Stream", nightVision: false, zoom: 1 }
+];
+
+let cctvInterval = null;
+
+function renderCctvSurveillance() {
+  const container = document.getElementById("cctv-matrix-container");
+  if (!container) return;
+
+  // Render camera feed cards if empty
+  if (container.children.length === 0) {
+    container.innerHTML = "";
+    CCTV_CAMERAS.forEach(cam => {
+      const card = el("div", { class: "cctv-feed-card", id: `cctv-card-${cam.id}` });
+
+      const screenWrap = el("div", { class: "cctv-screen-wrap" });
+      const canvas = el("canvas", { class: "cctv-canvas", id: `cctv-canvas-${cam.id}`, width: "480", height: "270" });
+      const scanlines = el("div", { class: "cctv-scanlines" });
+
+      const overlayTop = el("div", { class: "cctv-overlay-top" }, [
+        el("span", {}, `[${cam.id}] ${cam.name.toUpperCase()}`),
+        el("span", { class: "cctv-rec-badge" }, "● REC")
+      ]);
+
+      const overlayBottom = el("div", { class: "cctv-overlay-bottom" }, [
+        el("span", { id: `cctv-time-${cam.id}` }, new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC"),
+        el("span", {}, `${cam.resolution} | ${cam.temp}`)
+      ]);
+
+      screenWrap.appendChild(canvas);
+      screenWrap.appendChild(scanlines);
+      screenWrap.appendChild(overlayTop);
+      screenWrap.appendChild(overlayBottom);
+
+      // PTZ Controls Footer
+      const footer = el("div", { class: "cctv-feed-footer" }, [
+        el("div", {}, [
+          el("strong", { style: "font-size:0.85rem; display:block;" }, cam.name),
+          el("span", { class: "text-muted", style: "font-size:0.75rem;" }, `📍 ${cam.zone} • Motion: ${cam.motion}`)
+        ]),
+        el("div", { class: "cctv-ptz-bar" }, [
+          el("button", {
+            type: "button",
+            class: "cctv-ptz-btn",
+            title: "Toggle Night Vision (IR Filter)",
+            onclick: () => {
+              cam.nightVision = !cam.nightVision;
+              showToast(`Toggled IR Night Vision on ${cam.id}`, "info");
+            }
+          }, "🌙 IR"),
+          el("button", {
+            type: "button",
+            class: "cctv-ptz-btn",
+            title: "Digital 2x Zoom",
+            onclick: () => {
+              cam.zoom = cam.zoom === 1 ? 1.75 : 1;
+              showToast(`${cam.id} Zoom: ${cam.zoom}x`, "info");
+            }
+          }, "🔍 Zoom"),
+          el("button", {
+            type: "button",
+            class: "cctv-ptz-btn",
+            title: "Snapshot Evidence Frame",
+            onclick: () => {
+              showToast(`Captured verified CCTV snapshot from ${cam.id}.`, "success");
+            }
+          }, "📷 Snapshot")
+        ])
+      ]);
+
+      card.appendChild(screenWrap);
+      card.appendChild(footer);
+      container.appendChild(card);
+    });
+
+    startCctvAnimationLoop();
+    wireCctvCrossChecking();
+  }
+
+  updateCctvIncidentSelector();
+}
+
+function startCctvAnimationLoop() {
+  if (cctvInterval) clearInterval(cctvInterval);
+
+  let frameCount = 0;
+  cctvInterval = setInterval(() => {
+    frameCount++;
+    const nowStr = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+
+    CCTV_CAMERAS.forEach(cam => {
+      const timeEl = document.getElementById(`cctv-time-${cam.id}`);
+      if (timeEl) timeEl.textContent = nowStr;
+
+      const canvas = document.getElementById(`cctv-canvas-${cam.id}`);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Clear & Background
+      ctx.save();
+      if (cam.nightVision) {
+        ctx.fillStyle = "#022010"; // Green phosphor night vision
+      } else {
+        ctx.fillStyle = "#0a1017"; // Standard security low-light blue
+      }
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw Perspective Room Grid (Perspective Surveillance Wireframe)
+      ctx.strokeStyle = cam.nightVision ? "rgba(34, 197, 94, 0.25)" : "rgba(56, 189, 248, 0.15)";
+      ctx.lineWidth = 1;
+
+      // Floor & Wall Grid
+      ctx.beginPath();
+      // Vanishing point
+      const vpX = w / 2;
+      const vpY = h * 0.4;
+
+      ctx.moveTo(0, 0); ctx.lineTo(vpX, vpY);
+      ctx.moveTo(w, 0); ctx.lineTo(vpX, vpY);
+      ctx.moveTo(0, h); ctx.lineTo(vpX, vpY);
+      ctx.moveTo(w, h); ctx.lineTo(vpX, vpY);
+
+      // Back wall rectangle
+      const bwW = w * 0.45;
+      const bwH = h * 0.35;
+      ctx.strokeRect(vpX - bwW/2, vpY - bwH/2, bwW, bwH);
+
+      // Horizontal floor lines
+      for (let y = vpY + bwH/2; y < h; y += 22) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+
+      // Camera-Specific Visual Highlights
+      if (cam.id === "CAM-01") {
+        // Mess dining tables & buffet counter
+        ctx.fillStyle = cam.nightVision ? "rgba(34, 197, 94, 0.35)" : "rgba(245, 158, 11, 0.25)";
+        ctx.fillRect(w * 0.2, h * 0.55, w * 0.6, h * 0.25);
+        ctx.fillStyle = cam.nightVision ? "#22c55e" : "#f59e0b";
+        ctx.font = "10px monospace";
+        ctx.fillText("[BUFFET COUNTER: TEMP 68°C OK]", w * 0.22, h * 0.52);
+      } else if (cam.id === "CAM-02") {
+        // Corridor doors & washroom entrance
+        ctx.strokeStyle = cam.nightVision ? "rgba(34, 197, 94, 0.6)" : "rgba(56, 189, 248, 0.5)";
+        ctx.strokeRect(w * 0.65, h * 0.28, w * 0.18, h * 0.45);
+        ctx.fillStyle = cam.nightVision ? "#22c55e" : "#38bdf8";
+        ctx.font = "10px monospace";
+        ctx.fillText("[ROOM 214 WING]", w * 0.65, h * 0.25);
+      } else if (cam.id === "CAM-03") {
+        // Server Racks with Blinking Status LEDs
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(w * 0.15, h * 0.2, w * 0.25, h * 0.6);
+        ctx.fillRect(w * 0.6, h * 0.2, w * 0.25, h * 0.6);
+
+        // Blinking LEDs
+        for (let r = 0; r < 5; r++) {
+          const ledOn = (frameCount + r) % 3 === 0;
+          ctx.fillStyle = ledOn ? "#10b981" : "#064e3b";
+          ctx.fillRect(w * 0.18, h * 0.25 + r * 16, 6, 6);
+          ctx.fillRect(w * 0.63, h * 0.25 + r * 16, 6, 6);
+        }
+      }
+
+      // Simulated Motion Detection Box (bouncing gently)
+      const motionOffset = Math.sin(frameCount * 0.08) * 15;
+      const boxX = (w * 0.4) + motionOffset;
+      const boxY = (h * 0.45) + (Math.cos(frameCount * 0.08) * 8);
+
+      ctx.strokeStyle = cam.nightVision ? "#4ade80" : "#38bdf8";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(boxX, boxY, 54, 75);
+
+      // Target Corner Crosshairs
+      const len = 6;
+      ctx.beginPath();
+      ctx.moveTo(boxX, boxY + len); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX + len, boxY);
+      ctx.moveTo(boxX + 54 - len, boxY); ctx.lineTo(boxX + 54, boxY); ctx.lineTo(boxX + 54, boxY + len);
+      ctx.moveTo(boxX, boxY + 75 - len); ctx.lineTo(boxX, boxY + 75); ctx.lineTo(boxX + len, boxY + 75);
+      ctx.moveTo(boxX + 54 - len, boxY + 75); ctx.lineTo(boxX + 54, boxY + 75); ctx.lineTo(boxX + 54, boxY + 75 - len);
+      ctx.stroke();
+
+      ctx.fillStyle = cam.nightVision ? "#4ade80" : "#38bdf8";
+      ctx.font = "9px monospace";
+      ctx.fillText("TARGET [96%]", boxX, boxY - 4);
+
+      // Slight Video Noise
+      for (let n = 0; n < 30; n++) {
+        const nx = Math.random() * w;
+        const ny = Math.random() * h;
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
+        ctx.fillRect(nx, ny, 2, 2);
+      }
+
+      ctx.restore();
+    });
+  }, 120);
+}
+
+function updateCctvIncidentSelector() {
+  const select = document.getElementById("cctv-incident-selector");
+  if (!select) return;
+
+  const incidents = CampusStateEngine.loadIncidents();
+  const active = incidents.filter(i => i.status !== "RESOLVED");
+
+  select.innerHTML = "";
+  if (!active.length) {
+    select.appendChild(el("option", { value: "" }, "No active incidents pending cross-check"));
+    return;
+  }
+
+  active.forEach(inc => {
+    select.appendChild(el("option", { value: inc.id }, `[${inc.operationalPriority}] ${inc.title}`));
+  });
+}
+
+function wireCctvCrossChecking() {
+  const select = document.getElementById("cctv-incident-selector");
+  const btnVerify = document.getElementById("btn-cctv-verify");
+  const btnFlag = document.getElementById("btn-cctv-flag");
+  const resultBox = document.getElementById("cctv-crosscheck-result");
+  const refreshBtn = document.getElementById("btn-refresh-cctv");
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", () => {
+      startCctvAnimationLoop();
+      showToast("CCTV feed streams re-synchronized with campus camera switch.", "info");
+    });
+  }
+
+  if (select) {
+    select.addEventListener("change", () => {
+      const incId = select.value;
+      if (!incId) return;
+      const incidents = CampusStateEngine.loadIncidents();
+      const inc = incidents.find(i => i.id === incId);
+      if (!inc) return;
+
+      // Auto-highlight corresponding camera feed
+      let targetCamId = "CAM-01";
+      if (inc.category === "plumbing" || inc.category === "waterSystems") targetCamId = "CAM-02";
+      if (inc.category === "digital" || inc.category === "network" || inc.category === "servers") targetCamId = "CAM-03";
+      if (inc.category === "security") targetCamId = "CAM-04";
+
+      document.querySelectorAll(".cctv-feed-card").forEach(c => c.classList.remove("selected-feed"));
+      const matchedCard = document.getElementById(`cctv-card-${targetCamId}`);
+      if (matchedCard) {
+        matchedCard.classList.add("selected-feed");
+        matchedCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  }
+
+  if (btnVerify) {
+    btnVerify.addEventListener("click", () => {
+      const incId = select.value;
+      if (!incId) {
+        showToast("Select an incident to cross-check.", "error");
+        return;
+      }
+      const incidents = CampusStateEngine.loadIncidents();
+      const inc = incidents.find(i => i.id === incId);
+      if (!inc) return;
+
+      CampusStateEngine.logAuditEvent(
+        "CCTV_CROSSCHECK_VERIFIED",
+        "Chief Warden / Staff",
+        `CCTV visual verification confirmed physical hazard for ${inc.title}`,
+        "Cross-check passed: Physical conditions verified on live camera stream before approval."
+      );
+
+      if (resultBox) {
+        resultBox.style.display = "block";
+        resultBox.style.background = "rgba(16, 185, 129, 0.12)";
+        resultBox.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+        resultBox.style.color = "#35d68f";
+        resultBox.innerHTML = `<strong>✓ Visual Verification Stamp Applied:</strong> CCTV live inspection confirmed telemetry & student claim for <em>${inc.title}</em>. Logged to immutable audit trail.`;
+      }
+
+      showToast("CCTV visual verification confirmed and stamped in audit trail.", "success");
+      renderUnifiedAuditTrail();
+    });
+  }
+
+  if (btnFlag) {
+    btnFlag.addEventListener("click", () => {
+      const incId = select.value;
+      if (!incId) {
+        showToast("Select an incident to cross-check.", "error");
+        return;
+      }
+      const incidents = CampusStateEngine.loadIncidents();
+      const inc = incidents.find(i => i.id === incId);
+      if (!inc) return;
+
+      CampusStateEngine.logAuditEvent(
+        "CCTV_CROSSCHECK_FLAGGED",
+        "Chief Warden / Staff",
+        `CCTV visual discrepancy flagged for ${inc.title}`,
+        "Visual inspection does not match reported hazard severity. Physical warden dispatched."
+      );
+
+      if (resultBox) {
+        resultBox.style.display = "block";
+        resultBox.style.background = "rgba(239, 68, 68, 0.12)";
+        resultBox.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+        resultBox.style.color = "#f87171";
+        resultBox.innerHTML = `<strong>⚠️ Visual Discrepancy Flagged:</strong> CCTV inspection flagged a potential discrepancy for <em>${inc.title}</em>. On-duty guard notified for manual check.`;
+      }
+
+      showToast("Discrepancy logged to audit trail and guard dispatched.", "info");
+      renderUnifiedAuditTrail();
+    });
+  }
 }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ops Dashboard &amp; AIOps Controller — LifeLine by Cognora</title>
-  <meta name="description" content="Stateful Campus Operations Platform: Live Topology, Fault Injection, Hybrid Priority Engine, Sandbox Simulation, Two-Stage Self-Healing, and Real MTTD/MTTR Analytics.">
+  <meta name="description" content="Campus Operations Platform: Incident Management, Sandbox Simulation, Two-Stage Self-Healing, Live Topology, and CCTV Surveillance.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -35,7 +35,7 @@
           <div>
             <p class="eyebrow">AIOps Governance &amp; Telemetry Controller</p>
             <h1 style="margin-bottom:0.25rem;">Campus Operations Dashboard</h1>
-            <p class="text-muted" style="margin-bottom:0;">Live telemetry graph, fault simulation, hybrid priority classification, and human-in-the-loop self-healing.</p>
+            <p class="text-muted" style="margin-bottom:0;">Live student queries, incident triage, AI sandbox testing, CCTV cross-checking, and human-in-the-loop self-healing.</p>
           </div>
           <div id="live-pulse-indicator" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
             <span class="status-dot" style="background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
@@ -67,19 +67,22 @@
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs (Incidents first so staff immediately sees student queries) -->
         <div class="admin-tabs" role="tablist" aria-label="AIOps Sections">
-          <button class="admin-tab-btn active" data-tab="topology" role="tab" aria-selected="true">
+          <button class="admin-tab-btn active" data-tab="incidents" role="tab" aria-selected="true">
+            🚨 Incidents &amp; Student Reports <span id="badge-incident-count" class="badge" style="padding:0.1em 0.5em; font-size:0.7rem;">0</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="approvals" role="tab" aria-selected="false">
+            🛡️ Approvals &amp; Self-Healing
+          </button>
+          <button class="admin-tab-btn" data-tab="topology" role="tab" aria-selected="false">
             🌐 Live Campus Topology
           </button>
           <button class="admin-tab-btn" data-tab="faults" role="tab" aria-selected="false">
             ⚡ Fault Injection Console <span id="badge-fault-count" class="badge badge--risk-high" style="padding:0.1em 0.5em; font-size:0.7rem;">13 Scenarios</span>
           </button>
-          <button class="admin-tab-btn" data-tab="incidents" role="tab" aria-selected="false">
-            🚨 Incidents &amp; Student Reports <span id="badge-incident-count" class="badge" style="padding:0.1em 0.5em; font-size:0.7rem;">0</span>
-          </button>
-          <button class="admin-tab-btn" data-tab="approvals" role="tab" aria-selected="false">
-            🛡️ Approvals &amp; Self-Healing
+          <button class="admin-tab-btn" data-tab="cctv" role="tab" aria-selected="false">
+            📹 CCTV Surveillance &amp; Safety Cross-Check
           </button>
           <button class="admin-tab-btn" data-tab="ai-matrix" role="tab" aria-selected="false">
             🧠 Hybrid AI Decision Inspector
@@ -99,60 +102,13 @@
         </div>
 
         <!-- ===================================================================
-             TAB 1: LIVE CAMPUS TOPOLOGY
+             TAB 1: INCIDENTS & STUDENT REPORTS (DEFAULT ACTIVE VIEW)
              =================================================================== -->
-        <div id="pane-topology" class="admin-tab-pane">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Infrastructure Telemetry Graph</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Live state of all mission-critical digital systems, power, water, and student facilities.</p>
-            </div>
-            <span class="text-faint" style="font-size: 0.8rem;">Auto-updates on state mutation</span>
-          </div>
-
-          <div class="topology-grid" id="topology-grid">
-            <!-- Rendered by admin.js -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 2: FAULT INJECTION CONSOLE
-             =================================================================== -->
-        <div id="pane-faults" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Operational Fault Injection Console</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Trigger real-world fault simulations across Digital, Physical, and Safety systems. Each injection mutates live state, starts MTTD detection timers, computes Hybrid Priority, and generates recovery candidates.
-            </p>
-          </div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: var(--accent); margin: 0;">🌐 Digital Infrastructure Faults (Auto Self-Healable via Sandbox &amp; Two-Stage Approval)</h3>
-            <span class="badge badge--risk-medium">7 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-digital"></div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: #f59e0b; margin: 0;">💧 Physical Infrastructure Incidents (Dispatches Facilities &amp; Civil Work Orders)</h3>
-            <span class="badge badge--risk-medium">3 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-physical"></div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: #ef4444; margin: 0;">🍱 Mess Food, Water &amp; Health Safety (Urgent Human Inspection &amp; Quotas)</h3>
-            <span class="badge badge--risk-high">3 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-safety"></div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 3: INCIDENTS & STUDENT REPORTS
-             =================================================================== -->
-        <div id="pane-incidents" class="admin-tab-pane" hidden>
+        <div id="pane-incidents" class="admin-tab-pane">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
             <div>
               <h2 style="font-size: 1.25rem; margin: 0;">Active Incidents &amp; Student Ingest Stream</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Correlated telemetry, multi-student report clustering, and live status.</p>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Student query submissions, automated telemetry correlation, sandbox simulation logs, and status controls.</p>
             </div>
             
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
@@ -172,13 +128,13 @@
         </div>
 
         <!-- ===================================================================
-             TAB 4: APPROVALS & SELF-HEALING CONTROLLER
+             TAB 2: APPROVALS & SELF-HEALING CONTROLLER
              =================================================================== -->
         <div id="pane-approvals" class="admin-tab-pane" hidden>
           <div style="margin-bottom: 1.25rem;">
             <h2 style="font-size: 1.25rem; margin: 0;">Self-Healing Controller &amp; Human Approval Queue</h2>
             <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Enforcing Human Governance Gate: AI sandbox rehearses fixes on cloned state, requiring warden approval + final confirmation warning before live execution.
+              Enforcing Human Governance Gate: AI sandbox rehearses fixes on cloned state. Wardens grant approval, review operational disclaimers, and trigger live self-healing.
             </p>
           </div>
 
@@ -188,7 +144,107 @@
         </div>
 
         <!-- ===================================================================
-             TAB 5: HYBRID AI DECISION INSPECTOR
+             TAB 3: LIVE CAMPUS TOPOLOGY
+             =================================================================== -->
+        <div id="pane-topology" class="admin-tab-pane" hidden>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Infrastructure Telemetry Graph</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Live state of all mission-critical digital systems, power, water, and student facilities.</p>
+            </div>
+            <span class="text-faint" style="font-size: 0.8rem;">Auto-updates on state mutation</span>
+          </div>
+
+          <div class="topology-grid" id="topology-grid">
+            <!-- Rendered by admin.js -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 4: FAULT INJECTION CONSOLE
+             =================================================================== -->
+        <div id="pane-faults" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Operational Fault Injection Console</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Trigger real-world fault simulations across Digital, Physical, and Safety systems. Each injection mutates live state, starts MTTD detection timers, computes Hybrid Priority, and generates recovery candidates.
+            </p>
+          </div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: var(--accent); margin: 0;">🌐 Digital Infrastructure Faults (Auto Self-Healable via Sandbox &amp; Approval)</h3>
+            <span class="badge badge--risk-medium">7 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-digital"></div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: #f59e0b; margin: 0;">💧 Physical Infrastructure Incidents (Dispatches Facilities &amp; Civil Work Orders)</h3>
+            <span class="badge badge--risk-medium">3 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-physical"></div>
+
+          <div class="fault-section-header">
+            <h3 style="font-size: 1rem; color: #ef4444; margin: 0;">🍱 Mess Food, Water &amp; Health Safety (Urgent Human Inspection)</h3>
+            <span class="badge badge--risk-high">3 Scenarios</span>
+          </div>
+          <div class="fault-grid" id="fault-grid-safety"></div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 5: CCTV SURVEILLANCE & SAFETY CROSS-CHECKING (Staff Only)
+             =================================================================== -->
+        <div id="pane-cctv" class="admin-tab-pane" hidden>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Restricted CCTV Surveillance &amp; Safety Cross-Check</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Authority multi-feed surveillance. Cross-check live camera feeds against incident reports before approving work orders or self-healing.</p>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <span class="badge badge--risk-low">● 4 FEEDS ONLINE</span>
+              <button id="btn-refresh-cctv" class="btn btn--ghost btn--sm" style="font-size:0.78rem;">🔄 Sync Feeds</button>
+            </div>
+          </div>
+
+          <!-- CCTV Multi-Feed Matrix -->
+          <div class="cctv-matrix" id="cctv-matrix-container">
+            <!-- Camera feeds rendered by admin.js -->
+          </div>
+
+          <!-- Incident Visual Cross-Checking Workspace -->
+          <div class="cctv-crosscheck-panel card" style="margin-top:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+              <h3 style="margin:0; font-size:1.05rem;">🔍 Authority Incident Visual Cross-Check</h3>
+              <span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3);">Mandatory Verification Gate</span>
+            </div>
+            <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+              Select an active reported incident to inspect the physical zone camera. Cross-verify physical hazards (e.g. smoke, water pooling, food cleanliness) against student claims.
+            </p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap:1rem; align-items:end;">
+              <div class="field" style="margin:0;">
+                <label for="cctv-incident-selector">Select Active Incident to Cross-Check</label>
+                <select id="cctv-incident-selector" class="input" style="width:100%;">
+                  <!-- Populated by admin.js -->
+                </select>
+              </div>
+
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" id="btn-cctv-verify" class="btn btn--primary btn--sm" style="background:#10b981; border-color:#10b981; color:#04140c;">
+                  ✓ Confirm Visual Match &amp; Stamp Audit
+                </button>
+                <button type="button" id="btn-cctv-flag" class="btn btn--ghost btn--sm" style="border-color:#ef4444; color:#ef4444;">
+                  ⚠️ Flag Visual Discrepancy
+                </button>
+              </div>
+            </div>
+
+            <div id="cctv-crosscheck-result" style="margin-top:1rem; font-size:0.85rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); display:none;">
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 6: HYBRID AI DECISION INSPECTOR
              =================================================================== -->
         <div id="pane-ai-matrix" class="admin-tab-pane" hidden>
           <div style="margin-bottom: 1.25rem;">
@@ -198,131 +254,110 @@
             </p>
           </div>
 
-          <div class="card card--tight" style="margin-bottom: 1.5rem; background: var(--surface);">
-            <h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem;">⚖️ Decision Engine Framework</h3>
-            <p style="font-size: 0.88rem; margin-bottom: 0.85rem;">
-              <em>"The Neural Network assists incident classification, while LifeLine combines ML predictions with infrastructure evidence, student impact, and safety rules to make operational decisions."</em>
-            </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; font-size: 0.82rem;">
-              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
-                <strong>1. Neural Network Input (25%)</strong>
-                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">TF-IDF text vector + one-hot category into Multi-Layer Perceptron (MLP) producing Softmax probabilities.</p>
-              </div>
-              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
-                <strong>2. Service Criticality (25%)</strong>
-                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Asset Tier scoring: Website/Portal/Water (Tier 5), LMS/Hostel Network (Tier 4), Single Room (Tier 2).</p>
-              </div>
-              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
-                <strong>3. Student Impact (20%)</strong>
-                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Headcount scaling: 4,000+ campus users vs. 450 hostel residents vs. single room.</p>
-              </div>
-              <div style="background: var(--bg-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);">
-                <strong>4. Safety &amp; Telemetry (30%)</strong>
-                <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Physical fire/spark/health hazards + live DOWN status + multi-student report clusters.</p>
-              </div>
-            </div>
-          </div>
-
           <div id="ai-breakdown-container" class="stack">
-            <!-- Populated by admin.js with active and historic evaluations -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 6: FACILITIES & PHYSICAL WORK ORDERS
-             =================================================================== -->
-        <div id="pane-work-orders" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Physical Facilities &amp; Maintenance Work Orders</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-                Tracking non-digital issues (Plumbing, Electrical, Structural, Water Filter, Food Safety) across the maintenance dispatch lifecycle.
-              </p>
-            </div>
-          </div>
-
-          <div class="card" style="padding: 0; overflow-x: auto;">
-            <table class="work-orders-table" id="work-orders-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Incident / Title</th>
-                  <th>Department</th>
-                  <th>Priority</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th>Lifecycle Action</th>
-                </tr>
-              </thead>
-              <tbody id="work-orders-tbody">
-                <!-- Populated by admin.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 7: PHOTO EVIDENCE GALLERY
-             =================================================================== -->
-        <div id="pane-evidence" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Admin Photo &amp; Hazard Evidence Gallery</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Visual submissions from students and inspectors, complete with timestamp, location, and correlated incident metadata.
-            </p>
-          </div>
-
-          <div class="evidence-grid" id="evidence-grid">
             <!-- Populated by admin.js -->
           </div>
         </div>
 
         <!-- ===================================================================
-             TAB 8: REAL MTTD / MTTR METRICS
+             TAB 7: FACILITIES WORK ORDERS
              =================================================================== -->
-        <div id="pane-metrics" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Real-Time Operational Performance &amp; SLA Tracking</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Mean Time to Detect (MTTD) and Mean Time to Recover (MTTR) calculated in real time from live incident timestamps (never hardcoded).
-            </p>
-          </div>
-
-          <div class="metrics-dashboard-grid">
-            <div class="metric-hero">
-              <div class="metric-hero__label">Mean Time to Detect (MTTD)</div>
-              <div class="metric-hero__num" id="metric-hero-mttd">2.8s</div>
-              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">AIOps telemetry anomaly detection speed</p>
-            </div>
-            <div class="metric-hero">
-              <div class="metric-hero__label">Mean Time to Recover (MTTR)</div>
-              <div class="metric-hero__num" id="metric-hero-mttr">5.4s</div>
-              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">Self-healing execution to verified health</p>
-            </div>
-            <div class="metric-hero">
-              <div class="metric-hero__label">Total Incidents Handled</div>
-              <div class="metric-hero__num" id="metric-hero-total" style="color:var(--text);">0</div>
-              <p style="font-size:0.8rem; margin:0; color:var(--text-faint);">Across session lifecycle</p>
+        <div id="pane-work-orders" class="admin-tab-pane" hidden>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;">Facilities, Plumbing &amp; Food Safety Work Orders</h2>
+              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Lifecycle tracking for physical campus assets: Reported → Notified → Assigned → In Progress → Resolved.</p>
             </div>
           </div>
 
-          <div class="grid grid--auto" style="gap: 1.5rem;">
-            <div class="card">
-              <h3 style="font-size:1rem; margin-bottom:0.75rem;">⏱️ MTTD Detection Log History</h3>
-              <div id="mttd-history-list" class="metric-history-list"></div>
+          <div class="card card--tight">
+            <table class="work-orders-table" id="work-orders-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Department</th>
+                  <th>Title &amp; Scope</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Assigned To</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="work-orders-tbody">
+                <!-- Rendered by admin.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Automated Authority Email Dispatch Ledger -->
+          <div class="card" style="margin-top: 1.5rem; background: var(--surface);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+              <div>
+                <h3 style="margin:0; font-size:1.05rem;">📨 Automated Authority Email Dispatch Ledger</h3>
+                <p class="text-muted" style="margin:0; font-size:0.8rem;">
+                  Real-time log of work orders auto-dispatched to department heads (Electrical, Water Works, Food Safety, Fire Marshall, Sanitation, Civil) immediately upon AI root cause classification.
+                </p>
+              </div>
+              <span class="badge badge--risk-low">● SMTP RELAY ACTIVE</span>
             </div>
-            <div class="card">
-              <h3 style="font-size:1rem; margin-bottom:0.75rem;">⚡ MTTR Recovery Log History</h3>
-              <div id="mttr-history-list" class="metric-history-list"></div>
+
+            <div id="dispatched-emails-list" class="stack" style="gap:0.75rem;">
+              <!-- Populated by admin.js -->
             </div>
           </div>
         </div>
 
         <!-- ===================================================================
-             TAB 9: UNIFIED AUDIT TRAIL
+             TAB 8: PHOTO EVIDENCE GALLERY
+             =================================================================== -->
+        <div id="pane-evidence" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Student Photo Evidence &amp; Hazard Visuals</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Photos uploaded by students during incident ingestion, indexed for physical verification, mess food inspections, and audit compliance.
+            </p>
+          </div>
+
+          <div class="evidence-grid" id="evidence-grid">
+            <!-- Rendered by admin.js -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 9: REAL MTTD / MTTR METRICS
+             =================================================================== -->
+        <div id="pane-metrics" class="admin-tab-pane" hidden>
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Operational Efficiency &amp; Recovery Timelines</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
+              Real-time measurement of Mean Time to Detect (MTTD) and Mean Time to Recover (MTTR). Never hard-coded; computed dynamically from injection and recovery timestamps.
+            </p>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="card metric-hero-card">
+              <span class="metric-hero__label">Average Detection Speed</span>
+              <div class="metric-hero__value" id="metric-hero-mttd" style="color: #38bdf8;">2.8s</div>
+              <p class="text-muted" style="font-size: 0.85rem;">From telemetry anomaly onset to incident creation.</p>
+              
+              <div class="metric-history-list" id="mttd-history-list"></div>
+            </div>
+
+            <div class="card metric-hero-card">
+              <span class="metric-hero__label">Average Recovery Speed</span>
+              <div class="metric-hero__value" id="metric-hero-mttr" style="color: #35d68f;">5.4s</div>
+              <p class="text-muted" style="font-size: 0.85rem;">From approval confirmation to verified healthy state.</p>
+              
+              <div class="metric-history-list" id="mttr-history-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             TAB 10: UNIFIED AUDIT TRAIL
              =================================================================== -->
         <div id="pane-audit" class="admin-tab-pane" hidden>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <div>
               <h2 style="font-size: 1.25rem; margin: 0;">Comprehensive System &amp; Governance Audit Trail</h2>
               <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
@@ -343,71 +378,8 @@
     </section>
   </main>
 
-  <!-- ===================================================================
-       TWO-STAGE CONFIRMATION MODAL (FINAL WARNING)
-       =================================================================== -->
-  <div id="modal-confirm-selfhealing" class="modal-overlay" hidden>
-    <div class="modal-card">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-        <span class="eyebrow" style="color: #f59e0b; margin: 0;">Stage 2 Human Confirmation</span>
-        <span class="badge badge--risk-high">FINAL OPERATIONAL WARNING</span>
-      </div>
-      <h2 id="modal-incident-title" style="font-size: 1.35rem; margin-bottom: 0.5rem;">Confirm Self-Healing Execution</h2>
-      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 1rem;">
-        Authority approval was granted. Please review the live remediation parameters before triggering changes on live production infrastructure.
-      </p>
-
-      <div class="modal-warning-box">
-        <span style="font-size: 1.4rem;" aria-hidden="true">⚠️</span>
-        <div>
-          <strong style="color: #fde68a; display: block; margin-bottom: 0.25rem;">Operational Impact Disclaimer:</strong>
-          <p>
-            Executing this playbook will immediately recycle worker containers and re-negotiate routing tables. Live traffic may experience a brief 3-5 second socket re-bind.
-          </p>
-        </div>
-      </div>
-
-      <div style="background: var(--bg-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="display: flex; justify-content: space-between;">
-          <span class="text-faint">Target Subsystem:</span>
-          <strong id="modal-target-service">—</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span class="text-faint">Operational Priority:</span>
-          <span id="modal-priority-badge" class="badge badge--risk-high">—</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span class="text-faint">Estimated Recovery Duration:</span>
-          <strong id="modal-est-duration">~5.0s</strong>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.35rem;">
-          <span class="text-faint">Executing Remediation Playbook:</span>
-          <code id="modal-remediation-code" style="background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 4px; color: var(--accent); font-size: 0.78rem;">—</code>
-        </div>
-      </div>
-
-      <!-- Live Execution Progress (Hidden until confirm clicked) -->
-      <div id="modal-execution-progress" style="margin-top: 1.25rem;" hidden>
-        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem;">
-          <span id="modal-progress-status" style="color: var(--accent);">Executing Self-Healing...</span>
-          <span id="modal-progress-pct">0%</span>
-        </div>
-        <div style="height: 8px; background: var(--bg-alt); border-radius: 4px; overflow: hidden; border: 1px solid var(--border);">
-          <div id="modal-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.3s ease;"></div>
-        </div>
-      </div>
-
-      <div class="modal-actions" id="modal-actions-buttons">
-        <button type="button" class="btn btn--ghost" id="modal-btn-cancel">Cancel</button>
-        <button type="button" class="btn btn--primary" id="modal-btn-execute" style="background: #10b981; border-color: #10b981; color: #04100c;">
-          ⚡ EXECUTE SELF-HEALING NOW
-        </button>
-      </div>
-    </div>
-  </div>
-
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — Self-Healing AIOps Controller (SOAIDEATHON-S3).</div>
+    <div class="container">LifeLine by Cognora — Campus AIOps Controller.</div>
   </footer>
 
   <!-- Scripts -->
