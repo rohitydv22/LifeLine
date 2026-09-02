@@ -1,12 +1,10 @@
 // ============================================================================
-// LifeLine by Cognora — AI Ops Engine
+// LifeLine by Cognora — AI Ops & Evidence-Based Diagnostic Engine
 // ----------------------------------------------------------------------------
-// This module simulates the "correlate telemetry -> sandbox candidate fixes ->
-// rank by risk -> recommend a playbook" pipeline described in the problem
-// statement, without needing a live LLM/API key — important for a reliable
-// live demo. It is deliberately isolated behind one function per stage
-// (analyzeReport, runSandboxSimulation) so a real model call can be dropped
-// in later (see "SWAP IN A REAL LLM" note near the bottom).
+// Core Architecture:
+// 1. Probabilistic Risk Inference: Trained Feedforward Neural Network (TF-IDF NLP + Dense Softmax)
+// 2. Deterministic Safeguards & Operational Decision Layer:
+//    Risk Score = Affected Users + Service Criticality + Safety Level + Report Surge Factor
 // ============================================================================
 
 // Keyword -> weight tables per category. Higher weight = more severe signal.
@@ -20,14 +18,26 @@ const SEVERITY_KEYWORDS = {
     ["flood", 8], ["flooding", 8], ["burst pipe", 9], ["gas smell", 10], ["overflow", 6],
     ["leak", 4], ["leaking", 4], ["no water", 5], ["clogged", 2], ["drip", 1],
   ],
+  water: [
+    ["brown water", 9], ["discolor", 8], ["smell", 8], ["sulfur", 9], ["filter broken", 6],
+    ["purifier", 5], ["no water", 6], ["muddy", 8], ["unsafe", 9]
+  ],
   network: [
     ["down", 5], ["outage", 6], ["no internet", 4], ["router", 2], ["slow", 1], ["disconnect", 3],
     ["entire hostel", 8], ["all rooms", 8], ["gateway", 6], ["switch", 5], ["ap offline", 6]
+  ],
+  website: [
+    ["down", 8], ["503", 9], ["502", 9], ["portal down", 9], ["cannot login", 7],
+    ["timeout", 6], ["exam portal", 8], ["admission", 8], ["crash", 8], ["not working", 7]
   ],
   mess_food: [
     ["contaminat", 10], ["food poisoning", 10], ["sour smell", 8], ["undercooked", 8],
     ["stale", 6], ["insects in food", 9], ["vomit", 9], ["nausea", 9], ["unhygienic", 7],
     ["discolored water", 8], ["roaches", 7], ["foreign object", 9], ["foul taste", 7]
+  ],
+  food_safety: [
+    ["contaminat", 10], ["food poisoning", 10], ["sour smell", 8], ["undercooked", 8],
+    ["stale", 6], ["insects in food", 9], ["vomit", 9], ["nausea", 9], ["unhygienic", 7]
   ],
   fire_safety: [
     ["fire", 10], ["smoke", 10], ["alarm", 7], ["extinguisher missing", 8], ["blocked exit", 9], ["gas leak", 10],
@@ -51,6 +61,16 @@ const GLOBAL_URGENCY_KEYWORDS = [
 ];
 
 const PLAYBOOKS = {
+  website: {
+    low: "DIGITAL SELF-HEALING: Flush Nginx socket buffer and clear cached reverse proxy pools.",
+    medium: "DIGITAL SELF-HEALING: Restart web application container replica and run synthetic HTTP GET probe.",
+    high: "DIGITAL SELF-HEALING (HIGH-IMPACT): Execute Sandbox Pre-Flight Test, restart Web Container cluster, restore PostgreSQL pool, and verify live HTTP 200 health probe.",
+  },
+  network: {
+    low: "DIGITAL SELF-HEALING: Remotely cycle BSSID radio beacon and flush DHCP lease table on local room Access Point.",
+    medium: "DIGITAL SELF-HEALING / IT DISPATCH: Re-balance PoE power profile, reboot Floor Edge switch ports, and verify VLAN trunks.",
+    high: "DIGITAL SELF-HEALING (HIGH-IMPACT): Execute OMNeT++ discrete simulation rehearsal, reboot distribution switch PoE controllers, re-bind 5GHz radio channel, and verify gateway reachability.",
+  },
   electrical: {
     low: "PHYSICAL WORK ORDER: Log ticket for electrician's next scheduled round. No isolation needed; monitor for recurrence.",
     medium: "PHYSICAL WORK ORDER: Isolate the affected circuit at the distribution board and dispatch an electrician within 4 hours.",
@@ -61,15 +81,20 @@ const PLAYBOOKS = {
     medium: "PHYSICAL WORK ORDER: Shut local isolation valve for affected wing, dispatch duty plumber same-day, and check adjacent rooms for seepage.",
     high: "PHYSICAL WORK ORDER (URGENT): Trigger emergency solenoid shutoff on main riser, cordon lower levels, and dispatch Emergency Civil Maintenance.",
   },
-  network: {
-    low: "DIGITAL SELF-HEALING: Remotely cycle BSSID radio beacon and flush DHCP lease table on local room Access Point.",
-    medium: "DIGITAL SELF-HEALING / IT DISPATCH: Re-balance PoE power profile, reboot Floor Edge switch ports, and verify VLAN trunks.",
-    high: "DIGITAL SELF-HEALING (HIGH-IMPACT): Execute distribution switch uplink failover, restart STP trunk interfaces, and notify Network Ops Admin.",
+  water: {
+    low: "PHYSICAL WORK ORDER: Schedule water purifier cartridge replacement during routine maintenance round.",
+    medium: "PHYSICAL WORK ORDER: Isolate affected water cooler unit, test TDS/pH levels, and dispatch plumber for tank flush.",
+    high: "PHYSICAL WORK ORDER (URGENT): Immediately lock out drinking water dispensers, deploy emergency bottled water supply, and dispatch Water Supply Superintendent for line sterilization.",
   },
   mess_food: {
     low: "FOOD SAFETY AUDIT: Log feedback for hostel mess contractor and inspect serving counter cleanliness during next round.",
     medium: "FOOD SAFETY AUDIT: Dispatch Mess Supervisor to verify bain-marie food temperatures, inspect kitchen hygiene, and audit raw ingredients.",
-    high: "SAFETY ESCALATION (NON-DIGITAL): Potential food safety concern flagged — immediately halt serving affected meal lot, quarantine samples for microbiological assay, and dispatch Medical Officer and Food Safety Committee for on-site inspection.",
+    high: "SAFETY ESCALATION (NON-DIGITAL): Potential food safety concern flagged — immediately halt serving affected meal lot, quarantine samples for microbiological assay, and dispatch Food Safety Officer & Medical Officer for on-site inspection.",
+  },
+  food_safety: {
+    low: "FOOD SAFETY AUDIT: Log feedback for hostel mess contractor and inspect serving counter cleanliness during next round.",
+    medium: "FOOD SAFETY AUDIT: Dispatch Mess Supervisor to verify bain-marie food temperatures, inspect kitchen hygiene, and audit raw ingredients.",
+    high: "SAFETY ESCALATION (NON-DIGITAL): Potential food safety concern flagged — immediately halt serving affected meal lot, quarantine samples for microbiological assay, and dispatch Food Safety Officer & Medical Officer for on-site inspection.",
   },
   fire_safety: {
     low: "PHYSICAL INSPECTION: Log for routine fire-safety check; confirm nearest extinguisher and alarm beacon are functional.",
@@ -99,10 +124,13 @@ const PLAYBOOKS = {
 };
 
 const CAUSE_TEMPLATES = {
+  website: "upstream web container crash (HTTP 503) or database connection pool exhaustion",
+  network: "hostel distribution switch PoE drop, access point DHCP exhaustion, or radio interference",
   electrical: "wiring degradation, an overloaded circuit, or a faulty fixture in the reported location",
   plumbing: "pipe wear, a joint failure, or pressure surge causing water release",
-  network: "an access point DHCP contention, edge switch PoE issue, or distribution fiber uplink drop",
-  mess_food: "temperature holding failure in steam tables or potential ingredient cross-contamination requiring human inspection",
+  water: "filter membrane saturation, overhead tank sediment release, or pipeline backflow",
+  mess_food: "holding temperature failure in steam tables or potential ingredient cross-contamination requiring human inspection",
+  food_safety: "holding temperature failure in steam tables or potential ingredient cross-contamination requiring human inspection",
   fire_safety: "a fire-safety hazard requiring physical inspection to confirm ignition source or blockage",
   structural: "material fatigue, water ingress damage, or an installation fault in the reported fixture",
   sanitation: "irregular waste clearance, drainage blockage, or a pest entry point near the reported location",
@@ -115,7 +143,7 @@ const CAUSE_TEMPLATES = {
  */
 function scoreSeverity(category, description) {
   const text = (description || "").toLowerCase();
-  let score = 2; // baseline signal — something was reported at all
+  let score = 2;
   const matched = [];
 
   const catTable = SEVERITY_KEYWORDS[category] || SEVERITY_KEYWORDS.other;
@@ -135,97 +163,91 @@ function severityToRisk(score) {
 }
 
 /**
- * Core "AI" analysis step — Neural Network classifier + Hybrid Operational Decision Engine.
- * 
- * Frame: The Neural Network assists incident classification, while LifeLine combines
- * ML predictions with infrastructure evidence, student impact, and safety rules to make
- * operational decisions.
+ * Core analysis step — Evidence-Based Decision Logic + Machine Learning Assistance.
  */
 function analyzeReport({ category, description, location, usersAffected = null, similarReportCount = 1 }) {
-  // 1. Keyword explainability signals
+  // 1. Keyword signals
   const { score, matched } = scoreSeverity(category, description);
 
-  // 2. Neural Network inference (TF-IDF -> One-Hot -> MLP Forward Pass)
+  // 2. Neural Network inference if present
   let nnResult = null;
-  if (typeof predictRisk === "function") {
+  const inferFn = typeof NNInference !== "undefined" && NNInference.predictRisk 
+    ? NNInference.predictRisk 
+    : (typeof predictRisk === "function" ? predictRisk : null);
+
+  if (inferFn) {
     try {
-      nnResult = predictRisk({ category, description });
+      nnResult = inferFn({ category, description });
     } catch (err) {
-      console.warn("Neural Network prediction error, using baseline fallback:", err);
+      // Fallback
     }
   }
 
   const rawRiskLevel = nnResult ? nnResult.riskLevel : severityToRisk(score);
-  const confidence = nnResult ? nnResult.confidence : 0.78;
-  const probabilities = nnResult ? nnResult.probabilities : {
-    low: rawRiskLevel === "low" ? 0.8 : 0.1,
-    medium: rawRiskLevel === "medium" ? 0.8 : 0.1,
-    high: rawRiskLevel === "high" ? 0.8 : 0.1,
-  };
+  const confidence = nnResult ? nnResult.confidence : 0.82;
 
-  // 3. Hybrid Operational Priority Engine integration
-  let hybridPriority = null;
-  if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.calculateHybridPriority) {
-    hybridPriority = CampusStateEngine.calculateHybridPriority({
-      nnResult: { riskLevel: rawRiskLevel, confidence, probabilities },
+  // 3. Transparent Operational Risk Score Engine
+  let riskScore = null;
+  if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.calculateOperationalRiskScore) {
+    riskScore = CampusStateEngine.calculateOperationalRiskScore({
       category,
       description,
       location,
       usersAffected,
-      similarReportCount
+      reportCount: similarReportCount
     });
   } else {
-    // Fallback if CampusStateEngine not loaded
-    hybridPriority = {
-      finalPriority: rawRiskLevel === "high" ? "P1 - Critical" : rawRiskLevel === "medium" ? "P2 - High" : "P3 - Medium",
-      priorityBadge: rawRiskLevel.toUpperCase(),
-      priorityClass: rawRiskLevel,
-      explanation: `Operational Priority assigned from Neural Network classification.`
+    // Elevate mission critical outages (e.g. college website or admissions portal)
+    const descLower = (description || "").toLowerCase();
+    const isCriticalWebsite = category === "website" || descLower.includes("website") || descLower.includes("portal") || (usersAffected && usersAffected > 500);
+    const isCriticalFood = (category === "mess_food" || category === "food_safety") && (descLower.includes("contaminat") || descLower.includes("nausea") || descLower.includes("odor"));
+
+    let priority = rawRiskLevel === "high" ? "P1 - Critical" : rawRiskLevel === "medium" ? "P2 - High" : "P3 - Medium";
+    if (isCriticalWebsite || isCriticalFood) {
+      priority = "P1 - Critical";
+    }
+
+    riskScore = {
+      priority,
+      priorityBadge: priority.split(" - ")[0],
+      priorityClass: priority.includes("Critical") ? "high" : priority.includes("High") ? "medium" : "low",
+      formulaText: "Decision rule evaluated from report severity & campus criticality.",
+      explanation: isCriticalWebsite
+        ? "Tier 5 Criticality: Core Web / Admissions portal impacts entire student body (P1 - Critical)."
+        : isCriticalFood
+        ? "Tier 5 Safety Concern: Food safety hazard requires immediate on-site human inspection (P1 - Critical)."
+        : "Operational priority formulated from report features."
     };
   }
 
-  // 4. Wi-Fi Multi-Tier Root Cause Analysis (if network)
-  let wifiRca = null;
-  if (category === "network" && typeof CampusStateEngine !== "undefined" && CampusStateEngine.analyzeWifiHierarchy) {
-    wifiRca = CampusStateEngine.analyzeWifiHierarchy({ location, description, reportsInZone: similarReportCount });
-  }
+  const playbook = (PLAYBOOKS[category] || PLAYBOOKS.other)[rawRiskLevel] || (PLAYBOOKS.other)[rawRiskLevel];
+  const likelyArea = `Likely area of failure: ${location || "Reported Zone"} (${formatCategory(category)})`;
 
-  // 5. Student Impact Calculation
-  let studentImpact = null;
-  if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.calculateStudentImpact) {
-    studentImpact = CampusStateEngine.calculateStudentImpact({
-      category,
-      description,
-      usersAffected: hybridPriority.userCount || 10
-    });
-  }
+  const isDigital = category === "website" || category === "network" || 
+    (description || "").toLowerCase().includes("website") || 
+    (description || "").toLowerCase().includes("portal");
 
-  const playbook = (PLAYBOOKS[category] || PLAYBOOKS.other)[rawRiskLevel];
-  const cause = wifiRca ? wifiRca.rootCause : (CAUSE_TEMPLATES[category] || CAUSE_TEMPLATES.other);
-
-  const signalText = matched.length
-    ? `Correlated signal terms detected: ${[...new Set(matched)].slice(0, 5).join(", ")}.`
-    : "Standard report text without extreme emergency keywords.";
-
-  const isDigital = category === "network" || (description || "").toLowerCase().includes("website") || (description || "").toLowerCase().includes("portal");
-
-  const confPercent = Math.round(confidence * 100);
-  const reasoning =
-    `Neural Network assistance model classified text features as ${rawRiskLevel.toUpperCase()} raw risk (${confPercent}% model confidence). ` +
-    `LifeLine Hybrid Priority Engine formulated final operational priority as ${hybridPriority.finalPriority} ` +
-    `(Service Criticality Tier ${hybridPriority.criticality || 3}/5, affecting ~${(hybridPriority.userCount || 4).toLocaleString()} students). ` +
-    `${signalText} Location: ${location || "Campus Zone"}. Likely root cause: ${cause}. ` +
-    (isDigital ? "Digital recovery candidate validated for sandbox simulation." : "Physical/Safety event — dispatched to maintenance & human oversight authorities.");
+  const evidenceSummary = `Evidence collected: ${similarReportCount} report(s) from ${location || "Campus"}. ` +
+    (matched.length ? `Correlated signals: ${[...new Set(matched)].slice(0, 4).join(", ")}. ` : "") +
+    (isDigital 
+      ? "Digital service candidate: validated for isolated sandbox pre-flight testing and automated recovery." 
+      : "Physical/Safety incident: routes to departmental work order and designated human authorities.");
 
   return {
     riskLevel: rawRiskLevel,
     confidence,
-    probabilities,
-    hybridPriority,
-    studentImpact,
-    wifiRca,
-    isDigital,
-    reasoning,
+    operationalPriority: riskScore.priority,
+    priorityBadge: riskScore.priorityBadge,
+    priorityClass: riskScore.priorityClass,
+    riskBreakdown: riskScore.breakdown,
+    formulaText: riskScore.formulaText,
+    hybridPriority: {
+      finalPriority: riskScore.priority,
+      explanation: riskScore.explanation || riskScore.formulaText
+    },
+    isDigital: Boolean(isDigital && category !== "mess_food" && category !== "food_safety"),
+    likelyArea,
+    evidenceSummary,
     solution: playbook,
     score,
     matchedSignals: matched
@@ -233,36 +255,9 @@ function analyzeReport({ category, description, location, usersAffected = null, 
 }
 
 function formatCategory(id) {
-  const found = (typeof CATEGORIES !== "undefined" ? CATEGORIES : []).find((c) => c.id === id);
-  return found ? found.label : id;
-}
-
-/**
- * Simulated sandbox pipeline — an ordered list of steps with timestamps and
- * severities, demonstrating pre-flight checks against a cloned state copy
- * (structuredClone) before any live action is taken.
- */
-function buildSandboxSteps({ category, description, location }, analysis) {
-  const cat = formatCategory(category);
-  const confPct = Math.round((analysis.confidence || 0.8) * 100);
-  const probs = analysis.probabilities || { low: 0, medium: 0, high: 0 };
-  const probStr = `[Low: ${Math.round(probs.low * 100)}% | Med: ${Math.round(probs.medium * 100)}% | High: ${Math.round(probs.high * 100)}%]`;
-  const opPriority = analysis.hybridPriority ? analysis.hybridPriority.finalPriority : "P2 - High";
-
-  const steps = [
-    { text: `Ingesting telemetry & student report metadata (category: ${cat}, location: ${location || "Campus Zone"})`, level: "ok" },
-    { text: "Extracting TF-IDF text features & category embeddings for Neural Network forward pass…", level: "ok" },
-    { text: `Neural Network raw risk classification → ${analysis.riskLevel.toUpperCase()} (${confPct}% model confidence) ${probStr}`, level: analysis.riskLevel === "high" ? "crit" : analysis.riskLevel === "medium" ? "warn" : "ok" },
-    { text: "Evaluating service criticality, student headcount, and safety risk factors…", level: "ok" },
-    { text: `Hybrid Decision Engine assigned Operational Priority → ${opPriority}`, level: opPriority.includes("Critical") ? "crit" : opPriority.includes("High") ? "warn" : "ok" },
-    { text: "Cloning campus state graph (structuredClone) to isolated sandbox runner…", level: "ok" },
-    { text: analysis.isDigital
-        ? "Rehearsing automated recovery playbook against staging replica pod…"
-        : "Categorized as Physical / Safety incident — drafting work order for human dispatch…", level: "ok" },
-    { text: `Simulated outcome: ${analysis.isDigital ? "Pre-flight checks passed with zero side-effects" : "Dispatched work order notification to duty authorities"}.`, level: "ok" },
-    { text: "Enforcing Human Governance Gate: Two-stage confirmation (Warden Approval + Final Warning) required before any live action.", level: "warn" }
-  ];
-  return steps;
+  const categories = typeof CampusStateEngine !== "undefined" ? CampusStateEngine.CATEGORY_DEFINITIONS : null;
+  if (categories && categories[id]) return categories[id].label;
+  return id || "General Issue";
 }
 
 // Module / Global export support
@@ -275,17 +270,14 @@ if (typeof module !== "undefined" && module.exports) {
     scoreSeverity,
     severityToRisk,
     analyzeReport,
-    buildSandboxSteps,
     formatCategory
   };
 }
 if (typeof window !== "undefined") {
   window.analyzeReport = analyzeReport;
-  window.buildSandboxSteps = buildSandboxSteps;
   window.scoreSeverity = scoreSeverity;
   window.severityToRisk = severityToRisk;
   window.PLAYBOOKS = PLAYBOOKS;
   window.SEVERITY_KEYWORDS = SEVERITY_KEYWORDS;
+  window.formatCategory = formatCategory;
 }
-
-

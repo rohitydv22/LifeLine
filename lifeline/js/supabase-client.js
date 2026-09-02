@@ -1,5 +1,5 @@
 // ============================================================================
-// LifeLine by Cognora — Supabase client, Environment & Role-Separated Auth Guard
+// LifeLine by Cognora — Supabase Client, Pre-Seeded Accounts & Role-Separated Auth
 // ============================================================================
 
 let SUPABASE_URL = "https://nxqujcjaxykvcgmmzbvd.supabase.co";
@@ -13,7 +13,7 @@ window.LIFE_LINE_CONFIG = {
   nodeEnv: "development"
 };
 
-// Asynchronously hydrate configuration from backend /api/config
+// Asynchronously hydrate configuration from backend /api/config if running via node server
 async function initAppConfig() {
   if (window.location.protocol.startsWith("http")) {
     try {
@@ -28,9 +28,7 @@ async function initAppConfig() {
           SUPABASE_ANON_KEY = cfg.supabaseAnonKey;
         }
       }
-    } catch (e) {
-      // Running offline or static file mode
-    }
+    } catch (e) {}
   }
 }
 initAppConfig();
@@ -40,19 +38,173 @@ const sb = (window.supabase && typeof window.supabase.createClient === "function
   : null;
 
 const CATEGORIES = [
-  { id: "electrical", label: "Electrical", emoji: "⚡" },
-  { id: "plumbing", label: "Plumbing", emoji: "🚿" },
-  { id: "network", label: "Network / WiFi", emoji: "📶" },
-  { id: "mess_food", label: "Mess Food & Safety", emoji: "🍱" },
-  { id: "fire_safety", label: "Fire / Safety", emoji: "🔥" },
-  { id: "structural", label: "Structural", emoji: "🧱" },
-  { id: "sanitation", label: "Sanitation", emoji: "🧹" },
-  { id: "security", label: "Security", emoji: "🔒" },
-  { id: "other", label: "Other", emoji: "❓" },
+  { id: "network", label: "Wi-Fi / Network", emoji: "📶" },
+  { id: "website", label: "Website / Student Portal", emoji: "🌐" },
+  { id: "mess_food", label: "Food Issue", emoji: "🍽️" },
+  { id: "plumbing", label: "Drinking Water", emoji: "💧" },
+  { id: "facility", label: "Hostel / Facility Issue", emoji: "🏢" },
+  { id: "other", label: "Other Campus Infrastructure", emoji: "🔧" }
 ];
 
 // ----------------------------------------------------------------------------
-// Small shared helpers
+// PRE-SEEDED ACCOUNTS & CREDENTIALS REPOSITORY
+// ----------------------------------------------------------------------------
+const STORAGE_KEY_ACCOUNTS = "lifeline_registered_accounts_v4";
+
+const DEFAULT_ACCOUNTS = [
+  {
+    id: "usr-std-01",
+    email: "student@lifeline.campus",
+    password: "student123",
+    role: "student",
+    department: "student",
+    name: "Alex Kumar",
+    title: "Student Resident",
+    bh_number: "Hostel A",
+    room_number: "306",
+    phone: "9876543210"
+  },
+  {
+    id: "usr-it-01",
+    email: "it@lifeline.campus",
+    password: "it123",
+    role: "staff",
+    department: "it",
+    departmentLabel: "IT & Network Operations",
+    name: "Debashish Roy",
+    title: "Lead Network & Systems Engineer",
+    bh_number: "NOC Block",
+    room_number: "Server Rm 102",
+    phone: "9876543211"
+  },
+  {
+    id: "usr-hostel-01",
+    email: "hostel@lifeline.campus",
+    password: "hostel123",
+    role: "staff",
+    department: "hostel",
+    departmentLabel: "Hostel Maintenance & Facilities",
+    name: "Er. Ramesh K. Sharma",
+    title: "Hostel Maintenance Warden",
+    bh_number: "Hostel Caretaker Office",
+    room_number: "Suite 1",
+    phone: "9876543214"
+  },
+  {
+    id: "usr-mess-01",
+    email: "mess@lifeline.campus",
+    password: "mess123",
+    role: "staff",
+    department: "mess",
+    departmentLabel: "Mess & Food Safety Authority",
+    name: "Dr. Ananya Sen",
+    title: "Food Safety Officer & Chief Dietitian",
+    bh_number: "Central Dining Wing",
+    room_number: "Lab 201",
+    phone: "9876543215"
+  },
+  {
+    id: "usr-auth-01",
+    email: "authority@lifeline.campus",
+    password: "authority123",
+    role: "authority",
+    department: "admin",
+    departmentLabel: "Campus Administration",
+    name: "Dr. Vikram Singh",
+    title: "Chief Hostel Warden & Executive Authority",
+    bh_number: "Admin Block",
+    room_number: "Suite 101",
+    phone: "9876543212"
+  },
+  {
+    id: "usr-staff-01",
+    email: "staff@lifeline.campus",
+    password: "staff123",
+    role: "staff",
+    department: "hostel",
+    departmentLabel: "Hostel Maintenance & Operations",
+    name: "Er. Ramesh K. Sharma",
+    title: "Hostel Operations Staff",
+    bh_number: "Hostel Block A",
+    room_number: "Suite 1",
+    phone: "9876543214"
+  },
+  {
+    id: "usr-admin-01",
+    email: "admin@lifeline.campus",
+    password: "admin123",
+    role: "authority",
+    department: "admin",
+    departmentLabel: "Campus Administration",
+    name: "Campus System Administrator",
+    title: "Executive Operations Admin",
+    bh_number: "Admin Block",
+    room_number: "HQ",
+    phone: "9876543213"
+  }
+];
+
+function getAccounts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure default accounts are present
+        const merged = [...parsed];
+        for (const def of DEFAULT_ACCOUNTS) {
+          if (!merged.some(a => a.email.toLowerCase() === def.email.toLowerCase())) {
+            merged.push(def);
+          }
+        }
+        return merged;
+      }
+    }
+  } catch (e) {}
+  saveAccounts(DEFAULT_ACCOUNTS);
+  return DEFAULT_ACCOUNTS;
+}
+
+function saveAccounts(accounts) {
+  try {
+    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+  } catch (e) {}
+}
+
+function registerNewAccount(accountData) {
+  const accounts = getAccounts();
+  const existing = accounts.find(a => a.email.toLowerCase() === accountData.email.toLowerCase());
+  if (existing) {
+    throw new Error("An account with this email address already exists. Please sign in.");
+  }
+
+  const newAccount = {
+    id: "usr-" + Date.now(),
+    email: accountData.email.trim(),
+    password: accountData.password,
+    role: accountData.role || "student",
+    name: accountData.name || "Student Resident",
+    title: accountData.role === "authority" ? "Chief Warden" : accountData.role === "staff" ? "Operations Staff" : "Student Resident",
+    bh_number: accountData.bh_number || "Hostel A",
+    room_number: accountData.room_number || "101",
+    phone: accountData.phone || "",
+    createdAt: new Date().toISOString()
+  };
+
+  accounts.push(newAccount);
+  saveAccounts(accounts);
+  return newAccount;
+}
+
+function authenticateCredentials(email, password) {
+  const accounts = getAccounts();
+  const targetEmail = (email || "").trim().toLowerCase();
+  const match = accounts.find(a => a.email.toLowerCase() === targetEmail && a.password === password);
+  return match || null;
+}
+
+// ----------------------------------------------------------------------------
+// Small shared DOM & UI helpers
 // ----------------------------------------------------------------------------
 function fmtTime(iso) {
   if (!iso) return "—";
@@ -95,10 +247,10 @@ function showToast(message, type = "info") {
 
 // ----------------------------------------------------------------------------
 // STRICTLY SEPARATED SESSION STORES
-// Student sessions and Staff sessions are completely isolated keys in storage.
+// Student sessions and Staff/Authority sessions are isolated in storage.
 // ----------------------------------------------------------------------------
-const STORAGE_KEY_STUDENT = "lifeline_student_session";
-const STORAGE_KEY_STAFF = "lifeline_staff_session";
+const STORAGE_KEY_STUDENT = "lifeline_student_session_v3";
+const STORAGE_KEY_STAFF = "lifeline_staff_session_v3";
 
 function getStudentSession() {
   try {
@@ -124,7 +276,10 @@ function getStaffSession() {
     const raw = localStorage.getItem(STORAGE_KEY_STAFF);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.profile && parsed.profile.role === "admin") return parsed;
+      if (parsed && parsed.profile) {
+        const r = parsed.profile.role;
+        if (r === "admin" || r === "authority" || r === "staff" || r === "operator") return parsed;
+      }
     }
   } catch (e) {}
   return null;
@@ -143,44 +298,62 @@ function clearStaffSession() {
 // ----------------------------------------------------------------------------
 
 // Guard for Student Portal (report.html):
-// Requires a strictly authenticated Student session.
-// Even if a staff session exists, access is refused and redirected to student login (login.html).
+// Requires an authenticated Student session.
 async function requireAuth() {
   const student = getStudentSession();
   if (student && student.profile && student.profile.role === "student") {
     return student;
   }
-
-  // Not logged in as a student -> redirect to student login
+  // Not logged in as a student -> redirect to login
   window.location.href = "login.html";
   return null;
 }
 
-// Guard for Staff/Warden Portal (admin.html):
-// Requires a strictly authenticated Staff/Admin session.
-// Even if a student session exists, access is refused and redirected to staff login (admin-login.html).
+// Guard for Operations / Authority Console (admin.html):
+// Requires an authenticated Staff or Authority session.
 async function requireAdmin() {
   const staff = getStaffSession();
-  if (staff && staff.profile && staff.profile.role === "admin") {
-    return staff;
+  if (staff && staff.profile) {
+    const r = staff.profile.role;
+    if (r === "admin" || r === "authority" || r === "staff" || r === "operator") {
+      return staff;
+    }
   }
-
-  // Not logged in as staff -> redirect to staff login
+  // Not logged in as staff/authority -> redirect to login
   window.location.href = "admin-login.html";
   return null;
 }
 
 function wireLogoutButton() {
-  const btn = document.querySelector("[data-logout]");
-  if (!btn) return;
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    // Clear both session stores and Supabase auth on explicit logout
-    clearStudentSession();
-    clearStaffSession();
-    if (sb && sb.auth) {
-      try { await sb.auth.signOut(); } catch (err) {}
-    }
-    window.location.href = "index.html";
+  document.querySelectorAll("[data-logout]").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      clearStudentSession();
+      clearStaffSession();
+      if (sb && sb.auth) {
+        try { await sb.auth.signOut(); } catch (err) {}
+      }
+      window.location.href = "index.html";
+    });
   });
 }
+
+// Export functions to global
+window.getAccounts = getAccounts;
+window.saveAccounts = saveAccounts;
+window.registerNewAccount = registerNewAccount;
+window.authenticateCredentials = authenticateCredentials;
+window.getStudentSession = getStudentSession;
+window.setStudentSession = setStudentSession;
+window.clearStudentSession = clearStudentSession;
+window.getStaffSession = getStaffSession;
+window.setStaffSession = setStaffSession;
+window.clearStaffSession = clearStaffSession;
+window.requireAuth = requireAuth;
+window.requireAdmin = requireAdmin;
+window.wireLogoutButton = wireLogoutButton;
+window.showToast = showToast;
+window.fmtTime = fmtTime;
+window.el = el;
+window.CATEGORIES = CATEGORIES;
+

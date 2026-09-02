@@ -44,3 +44,4 @@ build/
 coverage/
 .temp/
 .cache/
+*.sim_state.json

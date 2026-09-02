@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/config",
+      "destination": "/api/config.js"
+    },
+    {
+      "source": "/api/auth/google",
+      "destination": "/api/auth/google.js"
+    },
+    {
+      "source": "/api/auth/google/callback",
+      "destination": "/api/auth/google/callback.js"
+    },
+    {
+      "source": "/",
+      "destination": "/lifeline/index.html"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/lifeline/index.html"
+    },
+    {
+      "source": "/login.html",
+      "destination": "/lifeline/login.html"
+    },
+    {
+      "source": "/admin-login.html",
+      "destination": "/lifeline/admin-login.html"
+    },
+    {
+      "source": "/register.html",
+      "destination": "/lifeline/register.html"
+    },
+    {
+      "source": "/report.html",
+      "destination": "/lifeline/report.html"
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/lifeline/admin.html"
+    },
+    {
+      "source": "/css/:path*",
+      "destination": "/lifeline/css/:path*"
+    },
+    {
+      "source": "/js/:path*",
+      "destination": "/lifeline/js/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/lifeline/:path*"
+    }
+  ]
+}

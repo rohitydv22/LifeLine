@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Maintenance &amp; Facilities Console — LifeLine</title>
+  <meta name="description" content="Clean, minimal, animated React console for departmental triage, self-healing, and incident coordination.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          },
+          boxShadow: {
+            '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+            'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- React 18 & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Framer Motion CDN -->
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+  <!-- Lucide Icons Standalone CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Babel for inline JSX compilation in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#FAFAFA] antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    const { motion, AnimatePresence } = window.Motion || window.framerMotion || {};
+
+    // Fallback motion shim if framer-motion cdn namespace differs
+    const MotionDiv = (motion && motion.div) ? motion.div : 'div';
+    const MotionButton = (motion && motion.button) ? motion.button : 'button';
+    const MotionSection = (motion && motion.section) ? motion.section : 'section';
+    const MotionNav = (motion && motion.nav) ? motion.nav : 'nav';
+    const MotionArticle = (motion && motion.article) ? motion.article : 'article';
+
+    // SVG Lucide Icons Helpers
+    const SvgIcon = ({ name, className = "w-4 h-4" }) => {
+      const iconMap = {
+        activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>',
+        globe: '<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>',
+        wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line>',
+        utensils: '<path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path><path d="M12 2v20"></path><path d="M21 15v7"></path><path d="M21 15a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7"></path>',
+        droplets: '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.09 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path>',
+        wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>',
+        zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>',
+        alertCircle: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
+        alertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>',
+        checkCircle2: '<circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path>',
+        clock: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
+        inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>',
+        chevronDown: '<polyline points="6 9 12 15 18 9"></polyline>',
+        chevronUp: '<polyline points="18 15 12 9 6 15"></polyline>',
+        terminal: '<polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>',
+        plus: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+        x: '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>',
+        shieldCheck: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path>',
+        rotateCcw: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path>',
+        sparkles: '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>',
+        arrowRight: '<line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>',
+        check: '<polyline points="20 6 9 17 4 12"></polyline>',
+        serverCrash: '<path d="M6 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"></path><path d="M6 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"></path><path d="M6 6h.01"></path><path d="M6 18h.01"></path><path d="m14 11-4 4"></path><path d="m10 11 4 4"></path>'
+      };
+
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+          dangerouslySetInnerHTML={{ __html: iconMap[name] || iconMap.activity }}
+        />
+      );
+    };
+
+    // Animated CountUp
+    const CountUp = ({ value, duration = 500 }) => {
+      const [count, setCount] = useState(0);
+
+      useEffect(() => {
+        let start = 0;
+        const end = parseInt(value, 10) || 0;
+        if (start === end) {
+          setCount(end);
+          return;
+        }
+
+        const totalSteps = 20;
+        const stepTime = Math.max(10, Math.floor(duration / totalSteps));
+        let currentStep = 0;
+
+        const timer = setInterval(() => {
+          currentStep++;
+          const progress = currentStep / totalSteps;
+          const currentVal = Math.round(start + (end - start) * progress);
+          setCount(currentVal);
+
+          if (currentStep >= totalSteps) {
+            clearInterval(timer);
+            setCount(end);
+          }
+        }, stepTime);
+
+        return () => clearInterval(timer);
+      }, [value, duration]);
+
+      return <span>{count}</span>;
+    };
+
+    // Header Bar
+    const HeaderBar = ({ onReset }) => (
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+        <div className="flex items-start gap-3.5">
+          <div className="relative mt-1">
+            <span className="flex h-3 w-3 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">
+              Hostel Maintenance &amp; Facilities Console
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Logged in as <strong className="text-slate-700 font-medium">Er. Ramesh K. Sharma</strong> (Warden / Facilities) · Real-time departmental triage
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <MotionButton
+            whileTap={{ scale: 0.96 }}
+            onClick={onReset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors shadow-sm"
+          >
+            <SvgIcon name="rotateCcw" className="w-3.5 h-3.5 text-slate-400" />
+            Reset State
+          </MotionButton>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-sm">
+            <SvgIcon name="shieldCheck" className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Facilities Authority</span>
+          </div>
+        </div>
+      </header>
+    );
+
+    // Stat Card
+    const StatCard = ({ label, value, iconName, colorTheme }) => {
+      const themeClasses = {
+        blue: { bg: 'bg-sky-50', text: 'text-sky-600' },
+        red: { bg: 'bg-rose-50', text: 'text-rose-600' },
+        amber: { bg: 'bg-amber-50', text: 'text-amber-600' },
+        green: { bg: 'bg-emerald-50', text: 'text-emerald-600' }
+      }[colorTheme] || { bg: 'bg-slate-50', text: 'text-slate-600' };
+
+      return (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-slate-500 tracking-wide uppercase">
+              {label}
+            </span>
+            <div className={`p-2 rounded-xl ${themeClasses.bg} ${themeClasses.text}`}>
+              <SvgIcon name={iconName} className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
+              <CountUp value={value} />
+            </span>
+          </div>
+        </div>
+      );
+    };
+
+    // Main App
+    function App() {
+      const SCENARIOS = [
+        { id: 'web_outage', title: 'Web Outage', subtitle: 'Self-Healing Demo', iconName: 'serverCrash', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', dept: 'it' },
+        { id: 'wifi_surge', title: 'Wi-Fi Surge', subtitle: '5 Clustered Reports', iconName: 'wifi', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', dept: 'it' },
+        { id: 'food_safety', title: 'Mess Food Alert', subtitle: 'P1 Safety Escalation', iconName: 'utensils', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', dept: 'mess' },
+        { id: 'water_hazard', title: 'Water Contamination', subtitle: 'Civil Work Order', iconName: 'droplets', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', dept: 'hostel' }
+      ];
+
+      const [selectedScenario, setSelectedScenario] = useState('web_outage');
+      const [selectedDept, setSelectedDept] = useState('all');
+      const [expandedIssueId, setExpandedIssueId] = useState('INC-1041');
+      const [isNewReportModalOpen, setIsNewReportModalOpen] = useState(false);
+
+      const [issues, setIssues] = useState([
+        {
+          id: 'INC-1041',
+          title: 'Campus Web Service Outage (HTTP 503)',
+          category: 'website',
+          categoryIcon: 'globe',
+          department: 'it',
+          departmentLabel: 'IT & Network Operations',
+          officer: 'Debashish Roy (NOC Lead)',
+          location: 'Core Campus Infrastructure (Port 8080)',
+          priority: 'P1 - Critical',
+          priorityReason: 'Core student portal down, impacting ~6,500 students.',
+          status: 'Service Outage — HTTP 503',
+          description: 'HTTP 503 Service Unavailable: Upstream web container unresponsive due to memory leak and exhausted connection pool.',
+          isUrgentSafety: false,
+          correlatedCount: 1,
+          timeAgo: '3 mins ago',
+          currentStepIndex: 1,
+          workflowSteps: [
+            { id: 1, label: 'Detect Outage' },
+            { id: 2, label: 'Run Sandbox Test' },
+            { id: 3, label: 'Authority Approval' },
+            { id: 4, label: 'Live Recovery & Verify' }
+          ],
+          logs: [
+            { time: '10:02:14', type: 'error', message: 'HTTP GET /healthz returned 503 Service Unavailable (timeout)' },
+            { time: '10:02:16', type: 'info', message: 'Triggered diagnostic check: Reverse proxy OK, container c89a2f1b crashed.' },
+            { time: '10:02:19', type: 'success', message: 'Sandbox staging dry-run PASSED: 4/4 assertions valid.' }
+          ]
+        },
+        {
+          id: 'INC-1042',
+          title: 'Hostel A Wi-Fi Access Point Degradation',
+          category: 'network',
+          categoryIcon: 'wifi',
+          department: 'it',
+          departmentLabel: 'IT & Network Operations',
+          officer: 'Debashish Roy (NOC Lead)',
+          location: 'Hostel A (3rd Floor Wing)',
+          priority: 'P2 - High',
+          priorityReason: '5 correlated student complaints clustered within 10 minutes.',
+          status: 'Action in Progress',
+          description: 'Multiple students reporting intermittent packet drops and Wi-Fi disconnects on switch SW-HostelA.',
+          isUrgentSafety: false,
+          correlatedCount: 5,
+          timeAgo: '12 mins ago',
+          currentStepIndex: 2,
+          workflowSteps: [
+            { id: 1, label: 'Cluster Reports' },
+            { id: 2, label: 'OMNeT++ RCA' },
+            { id: 3, label: 'PoE Reboot' },
+            { id: 4, label: 'Verify Ping' }
+          ],
+          logs: [
+            { time: '09:54:10', type: 'info', message: 'Aggregated 5 reports from Hostel A into Master Incident.' },
+            { time: '09:56:40', type: 'info', message: 'OMNeT++ simulation pins root cause to PoE power delivery threshold.' }
+          ]
+        },
+        {
+          id: 'INC-1043',
+          title: 'Food Quality & Dining Hygiene Alert',
+          category: 'food_safety',
+          categoryIcon: 'utensils',
+          department: 'mess',
+          departmentLabel: 'Mess & Food Safety Authority',
+          officer: 'Dr. Ananya Sen (Food Safety Officer)',
+          location: 'Central Dining Hall (Counter 2)',
+          priority: 'P1 - Critical',
+          priorityReason: 'Potential food contamination concern with nausea reports.',
+          status: 'Under Investigation',
+          description: 'Student reported sour odor in Tuesday dinner service. Food sample preservation requested.',
+          isUrgentSafety: true,
+          correlatedCount: 1,
+          timeAgo: '24 mins ago',
+          currentStepIndex: 1,
+          workflowSteps: [
+            { id: 1, label: 'P1 Priority Flag' },
+            { id: 2, label: 'Quarantine Sample' },
+            { id: 3, label: 'Duty Inspection' },
+            { id: 4, label: 'Formal Sign-Off' }
+          ],
+          logs: [
+            { time: '09:42:00', type: 'error', message: 'Safety Rule Match: Mandatory Food Safety Escalation triggered.' },
+            { time: '09:43:15', type: 'info', message: 'Dispatched instant quarantine alert to Dr. Ananya Sen.' }
+          ]
+        },
+        {
+          id: 'INC-1044',
+          title: 'Potable Drinking Water Discoloration',
+          category: 'water',
+          categoryIcon: 'droplets',
+          department: 'hostel',
+          departmentLabel: 'Facilities & Civil Works',
+          officer: 'Er. S. Murthy (Water Superintendent)',
+          location: 'Hostel BH-2 (1st Floor Cooler)',
+          priority: 'P2 - High',
+          priorityReason: 'Potable water quality hazard affecting floor residents.',
+          status: 'Assigned',
+          description: 'Discolored brown water flowing from main water cooler unit with sulfur odor.',
+          isUrgentSafety: false,
+          correlatedCount: 1,
+          timeAgo: '40 mins ago',
+          currentStepIndex: 0,
+          workflowSteps: [
+            { id: 1, label: 'Work Order Dispatched' },
+            { id: 2, label: 'Filter Replacement' },
+            { id: 3, label: 'Flush Line' },
+            { id: 4, label: 'TDS Test Verification' }
+          ],
+          logs: [
+            { time: '09:25:30', type: 'info', message: 'Official Departmental Work Order #WO-1004 generated.' }
+          ]
+        }
+      ]);
+
+      const handleScenarioSelect = (scenarioId) => {
+        setSelectedScenario(scenarioId);
+        const sc = SCENARIOS.find(s => s.id === scenarioId);
+        if (sc) setSelectedDept(sc.dept);
+
+        if (scenarioId === 'web_outage') setExpandedIssueId('INC-1041');
+        else if (scenarioId === 'wifi_surge') setExpandedIssueId('INC-1042');
+        else if (scenarioId === 'food_safety') setExpandedIssueId('INC-1043');
+        else if (scenarioId === 'water_hazard') setExpandedIssueId('INC-1044');
+      };
+
+      const handleAdvanceWorkflow = (issueId, targetStepIndex) => {
+        setIssues(prev => prev.map(item => {
+          if (item.id !== issueId) return item;
+          const nextStep = targetStepIndex;
+          let newStatus = item.status;
+          let newLogs = [...item.logs];
+          const time = new Date().toLocaleTimeString();
+
+          if (item.category === 'website') {
+            if (nextStep === 1) {
+              newLogs.push({ time, type: 'info', message: 'Running dry-run sandbox test on container replica...' });
+              newStatus = 'Under Investigation';
+            } else if (nextStep === 2) {
+              newLogs.push({ time, type: 'success', message: 'Authority sign-off granted by Chief Warden.' });
+              newStatus = 'Action in Progress';
+            } else if (nextStep >= 3) {
+              newLogs.push({ time, type: 'success', message: 'Container restarted. HTTP GET /healthz verified 200 OK (MTTR: 2.4s).' });
+              newStatus = 'Service Healthy — HTTP 200';
+            }
+          } else {
+            if (nextStep >= item.workflowSteps.length - 1) {
+              newStatus = 'Resolved';
+              newLogs.push({ time, type: 'success', message: 'Action complete and verified on-site.' });
+            } else {
+              newStatus = 'Action in Progress';
+              newLogs.push({ time, type: 'info', message: `Advanced to Step ${nextStep + 1}.` });
+            }
+          }
+
+          return {
+            ...item,
+            currentStepIndex: Math.min(nextStep, item.workflowSteps.length - 1),
+            status: newStatus,
+            logs: newLogs
+          };
+        }));
+      };
+
+      const handleStatusChange = (issueId, newStatus) => {
+        setIssues(prev => prev.map(item =>
+          item.id === issueId
+            ? {
+                ...item,
+                status: newStatus,
+                logs: [...item.logs, { time: new Date().toLocaleTimeString(), type: 'info', message: `Status updated to "${newStatus}".` }]
+              }
+            : item
+        ));
+      };
+
+      const handleReset = () => {
+        setSelectedScenario('web_outage');
+        setSelectedDept('all');
+        setExpandedIssueId('INC-1041');
+      };
+
+      const filteredIssues = useMemo(() => {
+        if (selectedDept === 'all') return issues;
+        if (selectedDept === 'admin') {
+          return issues.filter(i => i.isUrgentSafety || i.priority.includes('Critical') || i.priority.includes('High'));
+        }
+        return issues.filter(i => i.department === selectedDept);
+      }, [issues, selectedDept]);
+
+      const activeCount = issues.filter(i => !['Resolved', 'Verified / Closed', 'Service Healthy — HTTP 200'].includes(i.status)).length;
+      const highPriorityCount = issues.filter(i => (i.priority.includes('Critical') || i.priority.includes('High') || i.isUrgentSafety) && !['Resolved', 'Verified / Closed'].includes(i.status)).length;
+      const inProgressCount = issues.filter(i => ['Action in Progress', 'Under Investigation', 'Service Outage — HTTP 503'].includes(i.status)).length;
+      const resolvedTodayCount = issues.filter(i => ['Resolved', 'Verified / Closed', 'Service Healthy — HTTP 200'].includes(i.status)).length;
+
+      const DEPARTMENTS = [
+        { id: 'all', label: 'All Departments', iconName: 'activity', count: issues.length },
+        { id: 'it', label: 'IT & Network', iconName: 'globe', count: issues.filter(i => i.department === 'it').length },
+        { id: 'hostel', label: 'Hostel & Facilities', iconName: 'wrench', count: issues.filter(i => i.department === 'hostel').length },
+        { id: 'mess', label: 'Mess & Food Safety', iconName: 'utensils', count: issues.filter(i => i.department === 'mess').length },
+        { id: 'admin', label: 'Campus Administration', iconName: 'shieldCheck', count: issues.filter(i => i.isUrgentSafety || i.priority.includes('Critical') || i.priority.includes('High')).length }
+      ];
+
+      return (
+        <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans p-4 sm:p-6 lg:p-8">
+          <div className="max-w-6xl mx-auto space-y-6">
+            
+            {/* Header Bar */}
+            <HeaderBar onReset={handleReset} />
+
+            {/* 1-Click Demo Scenarios */}
+            <section className="bg-slate-100/70 p-5 rounded-2xl border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    1-Click Demo Scenarios
+                  </span>
+                  <span className="text-xs text-slate-400">· Real Inputs &amp; Live Logic</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-white text-slate-600 border border-slate-200 shadow-2xs">
+                  <SvgIcon name="sparkles" className="w-3 h-3 text-indigo-500" />
+                  Instant Test Triggers
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {SCENARIOS.map(sc => (
+                  <MotionButton
+                    key={sc.id}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleScenarioSelect(sc.id)}
+                    className={`relative flex items-center gap-3 p-3.5 rounded-2xl text-left border transition-all duration-200 ${
+                      selectedScenario === sc.id
+                        ? 'bg-white border-slate-900 shadow-md ring-1 ring-slate-900/10'
+                        : 'bg-white/80 hover:bg-white border-slate-200/90 hover:border-slate-300 shadow-sm'
+                    }`}
+                  >
+                    <div className={`p-2.5 rounded-xl ${sc.iconBg}`}>
+                      <SvgIcon name={sc.iconName} className={`w-4 h-4 ${sc.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-xs font-semibold text-slate-900 truncate">{sc.title}</p>
+                        {selectedScenario === sc.id && <span className="flex h-1.5 w-1.5 rounded-full bg-slate-900" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{sc.subtitle}</p>
+                    </div>
+                  </MotionButton>
+                ))}
+              </div>
+            </section>
+
+            {/* Stat Row — 4 KPI Cards */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Active Complaints" value={activeCount} iconName="inbox" colorTheme="blue" />
+              <StatCard label="High / Critical Priority" value={highPriorityCount} iconName="alertCircle" colorTheme="red" />
+              <StatCard label="Action in Progress" value={inProgressCount} iconName="clock" colorTheme="amber" />
+              <StatCard label="Resolved Today" value={resolvedTodayCount} iconName="checkCircle2" colorTheme="green" />
+            </section>
+
+            {/* Department Filter Tabs */}
+            <nav className="bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200 flex items-center gap-1 overflow-x-auto">
+              {DEPARTMENTS.map(dept => {
+                const isSelected = selectedDept === dept.id;
+                return (
+                  <MotionButton
+                    key={dept.id}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setSelectedDept(dept.id)}
+                    className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      isSelected ? 'text-slate-900 font-semibold bg-white shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                    }`}
+                  >
+                    <SvgIcon name={dept.iconName} className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`} />
+                    <span>{dept.label}</span>
+                    <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-md font-mono ${
+                      isSelected ? 'bg-slate-100 text-slate-900 font-bold' : 'bg-slate-100/70 text-slate-500'
+                    }`}>
+                      {dept.count}
+                    </span>
+                  </MotionButton>
+                );
+              })}
+            </nav>
+
+            {/* Assigned Issues List */}
+            <section className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">
+                    Assigned Issues &amp; Active Triage
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Click any issue to inspect report evidence, execute workflow steps, and review console logs.
+                  </p>
+                </div>
+                <MotionButton
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setIsNewReportModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors self-start sm:self-auto"
+                >
+                  <SvgIcon name="plus" className="w-3.5 h-3.5" />
+                  <span>Submit Test Report</span>
+                </MotionButton>
+              </div>
+
+              {filteredIssues.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 text-slate-400 border border-slate-100">
+                    <SvgIcon name="inbox" className="w-6 h-6" />
+                  </div>
+                  <div className="max-w-sm">
+                    <h4 className="text-sm font-semibold text-slate-900">No Active Issues</h4>
+                    <p className="text-xs text-slate-500 mt-1">All facilities and digital services are currently operating normally within expected SLA thresholds.</p>
+                  </div>
+                  <button onClick={handleReset} className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
+                    <SvgIcon name="sparkles" className="w-3.5 h-3.5 text-indigo-500" />
+                    Load Sample Data
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredIssues.map(issue => {
+                    const isExpanded = expandedIssueId === issue.id;
+                    return (
+                      <article
+                        key={issue.id}
+                        className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${
+                          isExpanded ? 'border-slate-300 shadow-md ring-1 ring-slate-200' : 'border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow'
+                        }`}
+                      >
+                        {/* Header bar */}
+                        <div
+                          onClick={() => setExpandedIssueId(isExpanded ? null : issue.id)}
+                          className="p-5 sm:p-6 cursor-pointer select-none flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        >
+                          <div className="flex items-start gap-3.5 min-w-0">
+                            <div className="p-2.5 rounded-xl bg-slate-100 text-slate-700 shrink-0 mt-0.5 sm:mt-0">
+                              <SvgIcon name={issue.categoryIcon || 'wrench'} className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-sm font-semibold text-slate-900 truncate">{issue.title}</h3>
+                                <span className="font-mono text-xs text-slate-400">#{issue.id}</span>
+                                {issue.correlatedCount > 1 && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                    ⚡ {issue.correlatedCount} Correlated Reports
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
+                                <span>📍 {issue.location}</span>
+                                <span>•</span>
+                                <span>🏢 Assigned: <strong className="text-slate-700 font-medium">{issue.departmentLabel}</strong> ({issue.officer})</span>
+                                <span>•</span>
+                                <span className="text-slate-400">{issue.timeAgo || 'Just now'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                              {issue.priority}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                              {issue.status}
+                            </span>
+                            <div className="p-1 rounded-lg text-slate-400">
+                              <SvgIcon name={isExpanded ? 'chevronUp' : 'chevronDown'} className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expandable Body */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 px-5 pb-5 sm:px-6 sm:pb-6 pt-4 space-y-4 bg-slate-50/50">
+                            <div className="bg-white p-4 rounded-xl border border-slate-200/80 space-y-2">
+                              <div>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                  Problem Description
+                                </span>
+                                <p className="text-xs text-slate-700 mt-0.5 leading-relaxed">
+                                  {issue.description}
+                                </p>
+                              </div>
+                              {issue.priorityReason && (
+                                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-500">
+                                  <SvgIcon name="alertCircle" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  <span><strong>Priority Decision Rule:</strong> {issue.priorityReason}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {issue.isUrgentSafety && (
+                              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                                <SvgIcon name="alertCircle" className="w-4 h-4 text-rose-600 shrink-0" />
+                                <span><strong>⚠️ Urgent Human Response Required:</strong> Safety hazard flagged for immediate on-site inspection.</span>
+                              </div>
+                            )}
+
+                            {/* Workflow steps */}
+                            {issue.workflowSteps && (
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Self-Healing &amp; Resolution Lifecycle
+                                  </span>
+                                  <span className="text-[11px] text-slate-400 font-mono">
+                                    Step {issue.currentStepIndex + 1} of {issue.workflowSteps.length}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  {issue.workflowSteps.map((step, idx) => {
+                                    const isComplete = idx < issue.currentStepIndex;
+                                    const isActive = idx === issue.currentStepIndex;
+                                    return (
+                                      <div
+                                        key={step.id}
+                                        onClick={() => handleAdvanceWorkflow(issue.id, idx)}
+                                        className={`flex-1 min-w-[130px] p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                          isActive
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                                            : isComplete
+                                            ? 'bg-emerald-50/70 text-emerald-900 border-emerald-200/70'
+                                            : 'bg-slate-50 text-slate-500 border-slate-200/60 hover:bg-slate-100/60'
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                          {isComplete ? (
+                                            <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+                                              <SvgIcon name="check" className="w-2.5 h-2.5" />
+                                            </div>
+                                          ) : isActive ? (
+                                            <span className="relative flex h-2 w-2">
+                                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+                                            </span>
+                                          ) : (
+                                            <span className="text-[10px] font-mono opacity-60">#{idx + 1}</span>
+                                          )}
+                                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+                                            Step {idx + 1}
+                                          </span>
+                                        </div>
+                                        <p className="text-xs font-semibold truncate">{step.label}</p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Console log strip */}
+                            {issue.logs && (
+                              <div>
+                                <div className="flex items-center gap-1.5 mb-1.5 text-slate-600 text-xs font-semibold">
+                                  <SvgIcon name="terminal" className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>System Console Output</span>
+                                </div>
+                                <div className="p-3.5 rounded-xl bg-slate-900 text-slate-200 font-mono text-[11px] space-y-1 max-h-36 overflow-y-auto shadow-inner">
+                                  {issue.logs.map((log, idx) => (
+                                    <div key={idx} className="flex gap-2 text-slate-300">
+                                      <span className="text-slate-500 select-none">[{log.time}]</span>
+                                      <span className={log.type === 'error' ? 'text-rose-400' : log.type === 'success' ? 'text-emerald-400' : 'text-slate-300'}>
+                                        {log.message}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Status controls */}
+                            <div className="pt-2 flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-slate-500 font-medium mr-1">Update Status:</span>
+                                {['Under Investigation', 'Action in Progress', 'Resolved', 'Verified / Closed'].map(st => (
+                                  <button
+                                    key={st}
+                                    onClick={() => handleStatusChange(issue.id, st)}
+                                    className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors ${
+                                      issue.status === st
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                                    }`}
+                                  >
+                                    {st}
+                                  </button>
+                                ))}
+                              </div>
+
+                              {issue.category === 'website' && issue.currentStepIndex < 3 && (
+                                <button
+                                  onClick={() => handleAdvanceWorkflow(issue.id, issue.currentStepIndex + 1)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors ml-auto"
+                                >
+                                  <span>Advance Step</span>
+                                  <SvgIcon name="arrowRight" className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

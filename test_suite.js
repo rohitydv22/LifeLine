@@ -326,9 +326,54 @@ async function runAsyncSelfHealingTest() {
     process.exit(1);
   }
 
+  // ----------------------------------------------------------------------------
+  // TEST SECTION 7: OMNeT++ / INET Campus Wi-Fi Simulation & Multi-Tier RCA
+  // ----------------------------------------------------------------------------
+  console.log("\n--- SECTION 7: OMNeT++ / INET Campus Wi-Fi Simulation & Multi-Tier RCA ---");
+  const {
+    CampusNetworkSimulator,
+    NetworkRCAEngine,
+    NetworkRecoveryEngine,
+    SimulationIncidentAdapter
+  } = require('./simulation/index.js');
+
+  const simInstance = new CampusNetworkSimulator();
+  simInstance.reset();
+  const baseline = simInstance.getStructuredReport("AP-306");
+  console.log(`  Steady-State Packet Loss: ${baseline.packetLoss}% | Latency: ${baseline.latency}ms | AP: ${baseline.accessPoint.status.toUpperCase()}`);
+  if (baseline.packetLoss === 0 && baseline.accessPoint.status === "healthy") {
+    console.log("  ✓ PASS: Baseline OMNeT++ network topology 100% HEALTHY.");
+  } else {
+    console.error("  ✗ FAIL: Baseline simulation failed");
+    process.exit(1);
+  }
+
+  // Inject Scenario A: Single AP Failure
+  simInstance.injectScenario("single_ap_failure");
+  const rcaResult = NetworkRCAEngine.investigate(simInstance, "Hostel A - Room 306");
+  console.log(`  Injected Scenario A: AP-306 -> OFFLINE | RCA Diagnosis: "${rcaResult.likelyRootCause}" (Scope: ${rcaResult.failureScope}, Impact: ~${rcaResult.affectedHeadcount} students)`);
+  if (rcaResult.likelyRootCause === "Local Access Point Failure" && rcaResult.affectedHeadcount === 4) {
+    console.log("  ✓ PASS: 6-Tier RCA accurately identified Local Access Point Failure for Room 306.");
+  } else {
+    console.error("  ✗ FAIL: RCA diagnosis incorrect");
+    process.exit(1);
+  }
+
+  // Two-Phase Safe Recovery
+  const rehearsal = NetworkRecoveryEngine.testDryRun(simInstance, "AP-306");
+  console.log(`  Safe Sandbox Rehearsal: ${rehearsal.steps.length} checks verified in ${rehearsal.simulatedDurationSec}s without mutating live state.`);
+  const liveRecovery = await NetworkRecoveryEngine.applyRecoveryLive(simInstance, "AP-306");
+  console.log(`  Live Recovery Completed in ${liveRecovery.mttrSeconds}s -> State: ${simInstance.topology.accessPoints["AP-306"].status.toUpperCase()}`);
+  if (liveRecovery.success && simInstance.topology.accessPoints["AP-306"].status === "healthy") {
+    console.log("  ✓ PASS: Two-phase recovery simulation verified with live MTTR metrics.");
+  } else {
+    console.error("  ✗ FAIL: Recovery verification failed");
+    process.exit(1);
+  }
+
   console.log("\n============================================================");
-  console.log("ALL 6 TEST SECTIONS PASSED WITH 100% SUCCESS!");
-  console.log("LifeLine Platform (Auth, AI, Emails, Self-Healing) is 100% Operational.");
+  console.log("ALL 7 TEST SECTIONS PASSED WITH 100% SUCCESS!");
+  console.log("LifeLine Platform + OMNeT++ / INET Simulation is 100% Operational.");
   console.log("============================================================");
 }
 

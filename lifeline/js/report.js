@@ -1,9 +1,28 @@
 // ============================================================================
-// LifeLine by Cognora — Report submission + sandbox console + "my reports"
+// LifeLine — Student Helpdesk & Real-Time Complaint Tracking Controller
 // ============================================================================
 
 let currentUser = null;
 let currentProfile = null;
+let attachedImageDataUrl = null;
+
+const STUDENT_CATEGORIES = [
+  { id: "network", label: "Wi-Fi & Network", emoji: "📶", dept: "IT & Network Operations" },
+  { id: "website", label: "Web Portal & ERP", emoji: "🌐", dept: "IT & Network Operations" },
+  { id: "food_safety", label: "Mess & Food Safety", emoji: "🍽️", dept: "Mess & Food Safety Authority" },
+  { id: "water", label: "Drinking Water & Plumbing", emoji: "🚰", dept: "Hostel Maintenance / Mess" },
+  { id: "electrical", label: "Power & Electrical", emoji: "💡", dept: "Hostel Maintenance - Electrical" },
+  { id: "facilities", label: "Hostel & Room Maintenance", emoji: "🏢", dept: "Hostel Maintenance & Facilities" }
+];
+
+const LIFECYCLE_STAGES = [
+  { key: "Submitted", label: "Submitted", icon: "🟡" },
+  { key: "Assigned", label: "Assigned", icon: "🔵" },
+  { key: "Under Investigation", label: "Under Investigation", icon: "🟣" },
+  { key: "Action in Progress", label: "Action in Progress", icon: "🟠" },
+  { key: "Resolved", label: "Resolved", icon: "🟢" },
+  { key: "Verified / Closed", label: "Verified / Closed", icon: "✅" }
+];
 
 (async function init() {
   const auth = await requireAuth();
@@ -11,16 +30,21 @@ let currentProfile = null;
   currentUser = auth.user;
   currentProfile = auth.profile;
 
-  document.getElementById("student-name").textContent = currentProfile.name.split(" ")[0];
+  const nameEl = document.getElementById("student-name");
+  if (nameEl && currentProfile.name) {
+    nameEl.textContent = `${currentProfile.name} (${currentProfile.bh_number || 'Hostel A'}, Rm ${currentProfile.room_number || '306'})`;
+  }
+
   wireLogoutButton();
   renderCategoryGrid();
-  loadMyReports();
+  wireImageUploadPreview();
+  loadMyComplaints();
 
-  // Cross-tab sync for my reports
+  // Reactive cross-tab listener
   if (typeof CampusStateEngine !== "undefined" && CampusStateEngine.subscribe) {
     CampusStateEngine.subscribe((event) => {
-      if (event === "incidents_changed" || event === "state_changed") {
-        loadMyReports();
+      if (event === "student_reports_changed" || event === "incidents_changed") {
+        loadMyComplaints();
       }
     });
   }
@@ -30,28 +54,92 @@ function renderCategoryGrid() {
   const grid = document.getElementById("category-grid");
   if (!grid) return;
   grid.innerHTML = "";
-  CATEGORIES.forEach((cat, i) => {
+
+  STUDENT_CATEGORIES.forEach((cat, i) => {
     const wrap = el("div", { class: "category-option" }, [
       el("input", {
-        type: "radio", name: "category", id: `cat-${cat.id}`, value: cat.id,
-        ...(i === 0 ? { checked: "checked" } : {}),
+        type: "radio",
+        name: "category",
+        id: `cat-${cat.id}`,
+        value: cat.id,
+        ...(i === 0 ? { checked: "checked" } : {})
       }),
       el("label", { for: `cat-${cat.id}` }, [
-        el("span", { class: "emoji", "aria-hidden": "true" }, cat.emoji),
-        el("span", {}, cat.label),
-      ]),
+        el("span", { style: "font-size:1.4rem;", "aria-hidden": "true" }, cat.emoji),
+        el("span", { style: "font-weight:600; font-size:0.85rem;" }, cat.label)
+      ])
     ]);
     grid.appendChild(wrap);
   });
 }
 
+function wireImageUploadPreview() {
+  const fileInput = document.getElementById("image");
+  const previewContainer = document.getElementById("image-preview-container");
+  const previewImg = document.getElementById("image-preview-img");
+  const previewName = document.getElementById("image-preview-name");
+  const removeBtn = document.getElementById("btn-remove-image");
+
+  if (!fileInput) return;
+
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      attachedImageDataUrl = null;
+      if (previewContainer) previewContainer.style.display = "none";
+      return;
+    }
+
+    try {
+      attachedImageDataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      if (previewImg) previewImg.src = attachedImageDataUrl;
+      if (previewName) previewName.textContent = file.name;
+      if (previewContainer) previewContainer.style.display = "flex";
+    } catch (err) {
+      console.error("Image preview error:", err);
+      attachedImageDataUrl = null;
+    }
+  });
+
+  removeBtn?.addEventListener("click", () => {
+    fileInput.value = "";
+    attachedImageDataUrl = null;
+    if (previewContainer) previewContainer.style.display = "none";
+  });
+}
+
+function quickFillForm(catId, desc) {
+  const rad = document.getElementById(`cat-${catId}`);
+  if (rad) {
+    rad.checked = true;
+    rad.click();
+    rad.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  const descEl = document.getElementById("description");
+  if (descEl) {
+    descEl.value = desc;
+  }
+  const locEl = document.getElementById("location");
+  if (locEl) {
+    locEl.value = "";
+    locEl.focus();
+  }
+  showToast("Sample issue details loaded. Please enter your room / location number.", "info");
+}
+
 // ----------------------------------------------------------------------------
-// Form submission
+// FORM SUBMISSION
 // ----------------------------------------------------------------------------
 const reportForm = document.getElementById("report-form");
 const submitBtn = document.getElementById("submit-btn");
 
-reportForm.addEventListener("submit", async (e) => {
+reportForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   document.getElementById("err-category").textContent = "";
   document.getElementById("err-description").textContent = "";
@@ -60,350 +148,282 @@ reportForm.addEventListener("submit", async (e) => {
   const categoryInput = reportForm.querySelector('input[name="category"]:checked');
   const description = document.getElementById("description").value.trim();
   const location = document.getElementById("location").value.trim();
-  const imageFile = document.getElementById("image").files[0];
 
   let valid = true;
-  if (!categoryInput) { document.getElementById("err-category").textContent = "Choose a category."; valid = false; }
-  if (!description) { document.getElementById("err-description").textContent = "Please describe what happened."; valid = false; }
-  if (!location) { document.getElementById("err-location").textContent = "Please tell us the location."; valid = false; }
+  if (!categoryInput) {
+    document.getElementById("err-category").textContent = "Please select an issue category.";
+    valid = false;
+  }
+  if (!location) {
+    document.getElementById("err-location").textContent = "Please specify your room or campus location.";
+    valid = false;
+  }
+  if (!description) {
+    document.getElementById("err-description").textContent = "Please describe what problem you are facing.";
+    valid = false;
+  }
   if (!valid) return;
 
   submitBtn.disabled = true;
-  submitBtn.innerHTML = `<span class="spinner" aria-hidden="true"></span> Ingesting telemetry…`;
+  submitBtn.innerHTML = `<span class="spinner" aria-hidden="true"></span> Submitting & Routing Complaint…`;
 
-  const category = categoryInput.value;
+  const categoryId = categoryInput.value;
+  const catObj = STUDENT_CATEGORIES.find(c => c.id === categoryId) || { label: "Campus Issue", emoji: "🔧", dept: "Hostel Maintenance" };
 
   try {
-    let localImageUrl = null;
-    let imagePath = null;
-
-    if (imageFile) {
-      // 1. Read locally for immediate offline/evidence preview
-      localImageUrl = await new Promise((res) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result);
-        reader.onerror = () => res(null);
-        reader.readAsDataURL(imageFile);
-      });
-
-      // 2. Try Supabase storage if active session
-      try {
-        const ext = imageFile.name.split(".").pop();
-        imagePath = `${currentUser.id}/${Date.now()}.${ext}`;
-        await sb.storage.from("problem-images").upload(imagePath, imageFile);
-      } catch (stErr) {
-        console.warn("Storage upload fallback:", stErr);
-      }
-    }
-
-    const initialAudit = [
-      { action: "Report submitted by student", actor: currentProfile.name, timestamp: new Date().toISOString() },
-    ];
-
-    // Check Multi-Report Correlation
-    const existingIncidents = typeof CampusStateEngine !== "undefined" ? CampusStateEngine.loadIncidents() : [];
-    const correlation = typeof CampusStateEngine !== "undefined"
-      ? CampusStateEngine.correlateReports({ category, location, description }, existingIncidents)
-      : { hasCluster: false, clusterCount: 1 };
-
-    // Register into Central Campus State Engine
-    const reportData = {
-      id: "REP-" + Date.now().toString().slice(-6),
-      student_id: currentUser.id,
-      student_name: currentProfile.name,
-      student_room: `${currentProfile.bh_number || 'BH-1'}, Room ${currentProfile.room_number || '101'}`,
-      category,
-      description,
+    // Submit to central state engine
+    const savedReport = CampusStateEngine.addStudentReport({
+      category: categoryId,
+      categoryLabel: catObj.label,
+      categoryEmoji: catObj.emoji,
+      student_id: currentUser?.id || "usr-std-01",
+      student_name: currentProfile?.name || "Alex Kumar",
+      student_room: currentProfile?.room_number || location,
       location,
-      image_url: localImageUrl || imagePath,
-      status: "pending",
-      similarReportCount: correlation.clusterCount,
-      correlation,
-      created_at: new Date().toISOString(),
-      audit_trail: initialAudit
-    };
+      description,
+      image_url: attachedImageDataUrl
+    });
 
-    // Store in Evidence Gallery if photo attached
-    if (localImageUrl) {
-      CampusStateEngine.addEvidenceItem({
-        title: `${category.toUpperCase()}: ${description.slice(0, 45)}...`,
-        category,
-        location,
-        imageUrl: localImageUrl,
-        uploaderName: currentProfile.name,
-        description,
-        priority: correlation.hasCluster ? "P1 - Critical" : "P2 - High"
-      });
-    }
-
-    // Try Supabase insert as best-effort if connected
-    try {
-      await sb.from("reports").insert({
-        student_id: currentUser.id,
-        category, description, location,
-        image_url: imagePath || localImageUrl,
-        status: "pending",
-        audit_trail: initialAudit,
-      });
-    } catch (dbErr) {
-      console.warn("Supabase reports insert fallback to local state engine:", dbErr);
-    }
-
+    // Reset Form
     reportForm.reset();
+    attachedImageDataUrl = null;
+    const previewContainer = document.getElementById("image-preview-container");
+    if (previewContainer) previewContainer.style.display = "none";
     renderCategoryGrid();
-
-    await runSandbox(reportData, initialAudit);
-    loadMyReports();
-  } catch (err) {
-    console.error(err);
-    showToast(err.message || "Could not submit report.", "error");
-  } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Submit & Run AIOps Sandbox Simulation";
+    submitBtn.textContent = "📨 Submit Complaint";
+
+    // Show Confirmation Banner
+    const successBox = document.getElementById("submit-success-box");
+    const successTitle = document.getElementById("success-title");
+    const successRefId = document.getElementById("success-ref-id");
+    const successMsg = document.getElementById("success-msg");
+
+    if (successBox && successTitle && successMsg) {
+      successTitle.textContent = `Complaint Recorded: #${savedReport.id}`;
+      if (successRefId) successRefId.textContent = `#${savedReport.id}`;
+
+      let msgHtml = `Your report for <strong>${location}</strong> has been routed to <strong>${savedReport.departmentLabel}</strong> (<em>${savedReport.assignedOfficer}</em>).`;
+      if (savedReport.isUrgentSafety) {
+        msgHtml += `<br><span style="color:#DC2626; font-weight:700;">⚠️ Urgent Safety Flag Active: Escalated to Food Safety & Campus Administration.</span>`;
+      }
+      successMsg.innerHTML = msgHtml;
+      successBox.style.display = "block";
+      successBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    showToast(`Complaint #${savedReport.id} routed to ${savedReport.departmentLabel}!`, "success");
+    loadMyComplaints();
+
+  } catch (err) {
+    console.error("Submission error:", err);
+    submitBtn.disabled = false;
+    submitBtn.textContent = "📨 Submit Complaint";
+    showToast("Failed to submit: " + err.message, "error");
   }
 });
 
 // ----------------------------------------------------------------------------
-// Sandbox console animation + persistence
+// LOAD AND RENDER STUDENT COMPLAINTS WITH 6-STAGE TRACKER
 // ----------------------------------------------------------------------------
-function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function loadMyComplaints() {
+  const container = document.getElementById("my-reports-list");
+  const countEl = document.getElementById("my-reports-count");
+  if (!container) return;
 
-async function runSandbox(report, initialAudit) {
-  const section = document.getElementById("sandbox-section");
-  const sandbox = document.getElementById("sandbox");
-  const logEl = document.getElementById("sandbox-log");
-  const statusText = document.getElementById("sandbox-status-text");
-  const meterScore = document.getElementById("meter-score");
-  const meterSignals = document.getElementById("meter-signals");
-  const meterConfidence = document.getElementById("meter-confidence");
-  const meterSteps = document.getElementById("meter-steps");
+  const allReports = CampusStateEngine.loadStudentReports();
+  // Show student's submitted reports
+  const myReports = allReports;
 
-  logEl.innerHTML = "";
-  sandbox.classList.remove("sandbox--done");
-  sandbox.classList.add("sandbox--running");
-  statusText.textContent = "running simulation…";
-  section.hidden = false;
-  section.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  const analysis = analyzeReport(report);
-  const steps = buildSandboxSteps(report, analysis);
-
-  meterSteps.textContent = `0/${steps.length}`;
-
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    const ts = new Date().toLocaleTimeString();
-    const line = el("div", { class: "sandbox__log-line", style: `animation-delay:0ms` }, [
-      el("span", { class: "ts" }, `[${ts}]`),
-      el("span", { class: step.level }, step.text),
-    ]);
-    logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-    meterSteps.textContent = `${i + 1}/${steps.length}`;
-    await sleep(350 + Math.random() * 200);
+  if (countEl) {
+    countEl.textContent = `${myReports.length} ${myReports.length === 1 ? 'Complaint' : 'Complaints'}`;
   }
 
-  meterScore.textContent = analysis.score;
-  meterSignals.textContent = new Set(analysis.matchedSignals).size;
-  const confPct = Math.round((analysis.confidence || 0.8) * 100);
-  if (meterConfidence) meterConfidence.textContent = `${confPct}%`;
+  container.innerHTML = "";
 
-  sandbox.classList.remove("sandbox--running");
-  sandbox.classList.add("sandbox--done");
-  statusText.textContent = "analysis complete";
-
-  // Correlation alert box
-  const corrBox = document.getElementById("correlation-alert-box");
-  const corrText = document.getElementById("correlation-alert-text");
-  if (report.correlation && report.correlation.hasCluster) {
-    corrBox.hidden = false;
-    corrText.textContent = report.correlation.clusterSummary;
-  } else {
-    corrBox.hidden = true;
-  }
-
-  const opBadge = document.getElementById("op-priority-badge");
-  if (opBadge && analysis.hybridPriority) {
-    opBadge.className = `badge badge--priority-${analysis.hybridPriority.priorityClass}`;
-    opBadge.textContent = analysis.hybridPriority.finalPriority;
-  }
-
-  const riskBadge = document.getElementById("risk-badge");
-  riskBadge.className = `badge badge--risk-${analysis.riskLevel}`;
-  riskBadge.textContent = `NN Risk: ${analysis.riskLevel.toUpperCase()}`;
-
-  const confPill = document.getElementById("nn-confidence-pill");
-  if (confPill) {
-    confPill.textContent = `NN Conf: ${confPct}%`;
-  }
-
-  // Update probability distribution bars
-  const probs = analysis.probabilities || { low: 0, medium: 0, high: 0 };
-  const lowPct = Math.round(probs.low * 100);
-  const medPct = Math.round(probs.medium * 100);
-  const highPct = Math.round(probs.high * 100);
-
-  const barLow = document.getElementById("prob-bar-low");
-  const barMed = document.getElementById("prob-bar-medium");
-  const barHigh = document.getElementById("prob-bar-high");
-  const valLow = document.getElementById("prob-val-low");
-  const valMed = document.getElementById("prob-val-medium");
-  const valHigh = document.getElementById("prob-val-high");
-
-  if (barLow) barLow.style.width = `${lowPct}%`;
-  if (barMed) barMed.style.width = `${medPct}%`;
-  if (barHigh) barHigh.style.width = `${highPct}%`;
-  if (valLow) valLow.textContent = `${lowPct}%`;
-  if (valMed) valMed.textContent = `${medPct}%`;
-  if (valHigh) valHigh.textContent = `${highPct}%`;
-
-  document.getElementById("ai-solution-text").textContent = analysis.solution;
-  document.getElementById("ai-reasoning-text").textContent = analysis.reasoning;
-
-  const approvalText = document.getElementById("approval-note-text");
-  if (analysis.riskLevel === "high" || (analysis.hybridPriority && analysis.hybridPriority.priorityClass === "critical")) {
-    approvalText.textContent = "High-impact recommendation: Live recovery requires mandatory Warden Approval and Final Human Confirmation.";
-  } else {
-    approvalText.textContent = "Routed to the Operations Dashboard for warden review and confirmation.";
-  }
-
-  const auditTrail = [
-    ...initialAudit,
-    { action: "Sandbox simulation completed on cloned state", actor: "LifeLine AI Engine", timestamp: new Date().toISOString() },
-    { action: `Operational Priority assigned as ${analysis.hybridPriority ? analysis.hybridPriority.finalPriority : 'P2 - High'}`, actor: "LifeLine Decision Engine", timestamp: new Date().toISOString() },
-    { action: "Routed to warden dashboard for approval", actor: "LifeLine Controller", timestamp: new Date().toISOString() },
-  ];
-
-  // Save Incident to Central State Engine
-  const incidents = CampusStateEngine.loadIncidents();
-  const newIncident = {
-    id: report.id,
-    title: `${formatCategory(report.category)}: ${report.location}`,
-    category: report.category,
-    target: report.category === "network" ? "network" : report.category === "mess_food" ? "messFacilities" : "servers",
-    severity: analysis.riskLevel === "high" ? "critical" : "high",
-    operationalPriority: analysis.hybridPriority ? analysis.hybridPriority.finalPriority : "P2 - High",
-    priorityBadge: analysis.hybridPriority ? analysis.hybridPriority.priorityBadge : "HIGH",
-    status: "SANDBOXED",
-    description: report.description,
-    location: report.location,
-    recommendedAction: analysis.solution,
-    rootCause: analysis.reasoning,
-    usersAffected: analysis.hybridPriority ? analysis.hybridPriority.userCount : 50,
-    scope: "Hostel Zone",
-    mttdSeconds: 2.1,
-    studentImpact: analysis.studentImpact,
-    hybridDecision: analysis.hybridPriority,
-    isDigital: analysis.isDigital,
-    sandboxResults: {
-      steps: steps.map(s => ({ action: s.text, status: "PASSED", latency: "25ms" })),
-      rehearsalPassed: true
-    },
-    createdAt: new Date().toISOString(),
-    history: auditTrail.map(a => ({ stage: "LOGGED", time: a.timestamp, note: a.action }))
-  };
-
-  incidents.unshift(newIncident);
-  CampusStateEngine.saveIncidents(incidents);
-  CampusStateEngine.logAuditEvent("STUDENT_REPORT_INGESTED", currentProfile.name, `Submitted report: ${report.category}`, `Assigned Priority: ${newIncident.operationalPriority}`);
-
-  // If physical/non-digital, automatically mail the designated authority officer
-  const emailBox = document.getElementById("email-dispatch-box");
-  const emailDetails = document.getElementById("email-dispatch-details");
-
-  if (!analysis.isDigital && CampusStateEngine.dispatchPhysicalAuthorityEmail) {
-    const emailResult = CampusStateEngine.dispatchPhysicalAuthorityEmail({
-      incidentId: newIncident.id,
-      title: newIncident.title,
-      category: report.category,
-      priority: newIncident.operationalPriority,
-      location: report.location,
-      studentName: currentProfile.name,
-      studentRoom: `${currentProfile.bh_number || 'BH-1'}, Room ${currentProfile.room_number || '101'}`,
-      description: report.description,
-      rootCause: analysis.reasoning,
-      solution: analysis.solution
-    });
-
-    if (emailBox && emailDetails) {
-      emailBox.style.display = "block";
-      emailDetails.innerHTML = `
-        <div style="display:grid; grid-template-columns:auto 1fr; gap:0.25rem 0.6rem; margin-top:0.35rem;">
-          <span style="color:var(--text-faint);">Dispatched To:</span>
-          <strong>${emailResult.toOfficer} (${emailResult.toDesignation})</strong>
-          <span style="color:var(--text-faint);">Official Email:</span>
-          <code style="color:var(--accent);">${emailResult.toEmail}</code>
-          <span style="color:var(--text-faint);">Department:</span>
-          <span>${emailResult.department} (${emailResult.phoneExt})</span>
-          <span style="color:var(--text-faint);">Response SLA:</span>
-          <span style="color:#10b981; font-weight:700;">${emailResult.sla}</span>
-        </div>
-      `;
-    }
-
-    // Also create Physical Work Order with linked email record
-    CampusStateEngine.createWorkOrder({
-      title: `${formatCategory(report.category)} at ${report.location}`,
-      category: report.category,
-      priority: newIncident.operationalPriority,
-      location: report.location,
-      description: report.description,
-      dispatchedEmailId: emailResult.id
-    });
-
-    showToast(`Physical issue analyzed & work order auto-emailed to ${emailResult.toOfficer}.`, "success");
-  } else {
-    if (emailBox) emailBox.style.display = "none";
-    showToast("Report simulated in sandbox and routed to Warden Ops Dashboard.", "success");
-  }
-}
-
-// ----------------------------------------------------------------------------
-// My reports list
-// ----------------------------------------------------------------------------
-async function loadMyReports() {
-  const listEl = document.getElementById("my-reports-list");
-  if (!listEl) return;
-
-  const incidents = CampusStateEngine.loadIncidents();
-  listEl.innerHTML = "";
-
-  if (!incidents.length) {
-    listEl.appendChild(el("div", { class: "empty-state" }, "You haven't submitted any reports yet."));
+  if (!myReports.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p style="font-size:1rem; margin-bottom:0.35rem; color:var(--heading-color); font-weight:600;">No Complaints Submitted Yet</p>
+        <p style="font-size:0.85rem; margin:0; color:var(--text-muted);">Use the form above to report a Wi-Fi, food, water, or hostel facility problem.</p>
+      </div>
+    `;
     return;
   }
 
-  incidents.forEach((report) => listEl.appendChild(renderReportRow(report)));
+  myReports.forEach(rep => {
+    const card = el("article", { class: "complaint-card" });
+
+    // Status Badge & Styling
+    let statusClass = "badge--status-submitted";
+    const st = (rep.status || "").toLowerCase();
+    if (st.includes("assigned")) statusClass = "badge--status-assigned";
+    else if (st.includes("investigat")) statusClass = "badge--status-investigating";
+    else if (st.includes("progress")) statusClass = "badge--status-progress";
+    else if (st.includes("resolved")) statusClass = "badge--status-resolved";
+    else if (st.includes("closed") || st.includes("verified")) statusClass = "badge--status-closed";
+
+    // Priority Badge
+    let priorityBadgeClass = "badge--priority-low";
+    if (rep.operationalPriority?.includes("Critical") || rep.isUrgentSafety) {
+      priorityBadgeClass = "badge--priority-critical";
+    } else if (rep.operationalPriority?.includes("High")) {
+      priorityBadgeClass = "badge--priority-high";
+    } else if (rep.operationalPriority?.includes("Medium")) {
+      priorityBadgeClass = "badge--priority-medium";
+    }
+
+    // Header
+    const header = el("div", { class: "complaint-card__header" }, [
+      el("div", { style: "display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;" }, [
+        el("span", { style: "font-size:1.3rem;" }, rep.categoryEmoji || "🔧"),
+        el("span", { class: "complaint-card__title" }, [
+          document.createTextNode(rep.categoryLabel || rep.category),
+          el("span", { style: "font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted); font-weight:normal;" }, `#${rep.id}`)
+        ])
+      ]),
+      el("div", { style: "display:flex; gap:0.4rem; align-items:center;" }, [
+        el("span", { class: `badge ${priorityBadgeClass}` }, rep.operationalPriority || "P3 - Medium"),
+        el("span", { class: `badge ${statusClass}` }, rep.status || "Assigned")
+      ])
+    ]);
+
+    // Metadata
+    const meta = el("div", { class: "complaint-card__meta" }, [
+      el("span", {}, `📍 ${rep.location || 'Campus'}`),
+      el("span", {}, `🏢 Assigned to: <strong>${rep.departmentLabel || 'Hostel Maintenance'}</strong> (${rep.assignedOfficer || 'Duty Officer'})`),
+      el("span", {}, `🕒 ${fmtTime(rep.created_at)}`)
+    ]);
+
+    // Description
+    const body = el("p", { class: "complaint-card__desc" }, rep.description);
+
+    // 6-Stage Lifecycle Stepper Bar
+    const stepper = renderLifecycleStepper(rep.status);
+
+    card.appendChild(header);
+    card.appendChild(meta);
+    card.appendChild(body);
+
+    // Urgent Safety Alert Flag
+    if (rep.isUrgentSafety) {
+      const urgentAlert = el("div", {
+        style: "background:#FEE2E2; border:1px solid #FCA5A5; color:#B91C1C; padding:0.45rem 0.75rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.4rem;"
+      }, [
+        el("span", {}, "⚠️ Urgent Safety Incident:"),
+        el("span", { style: "font-weight:normal;" }, "Immediate on-site inspection and authority response initiated.")
+      ]);
+      card.appendChild(urgentAlert);
+    }
+
+    // Attached Image Thumbnail
+    if (rep.image_url) {
+      const imgRow = el("div", { style: "margin-bottom:0.75rem; display:flex; align-items:center; gap:0.6rem;" }, [
+        el("img", {
+          src: rep.image_url,
+          alt: "Attached photo evidence",
+          class: "image-thumb-preview",
+          onclick: () => openPhotoModal(rep.image_url, `Complaint #${rep.id} Attached Evidence`)
+        }),
+        el("span", { style: "font-size:0.78rem; color:var(--text-muted);" }, "📸 Photo attached (Click to view)")
+      ]);
+      card.appendChild(imgRow);
+    }
+
+    // Resolution Notes (if any)
+    if (rep.resolutionNotes) {
+      const notesBox = el("div", {
+        style: "background:var(--status-success-bg); border:1px solid var(--status-success-border); padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.82rem; color:var(--status-success); margin-bottom:0.75rem;"
+      }, [
+        el("strong", {}, "Resolution Notes: "),
+        document.createTextNode(rep.resolutionNotes)
+      ]);
+      card.appendChild(notesBox);
+    }
+
+    // Priority Reason explanation
+    if (rep.priorityReason) {
+      const reasonBox = el("div", { style: "font-size:0.78rem; color:var(--text-faint); margin-bottom:0.5rem;" }, [
+        el("span", { style: "font-weight:600;" }, "Priority Reason: "),
+        document.createTextNode(rep.priorityReason)
+      ]);
+      card.appendChild(reasonBox);
+    }
+
+    card.appendChild(stepper);
+    container.appendChild(card);
+  });
 }
 
-function renderReportRow(report) {
-  const catInfo = CATEGORIES.find((c) => c.id === report.category);
-  const row = el("article", { class: "report-row card" });
+function renderLifecycleStepper(currentStatus) {
+  const currentLower = (currentStatus || "").toLowerCase();
+  
+  // Find current active index
+  let activeIndex = 0;
+  if (currentLower.includes("assigned")) activeIndex = 1;
+  else if (currentLower.includes("investigat")) activeIndex = 2;
+  else if (currentLower.includes("progress")) activeIndex = 3;
+  else if (currentLower.includes("resolved")) activeIndex = 4;
+  else if (currentLower.includes("closed") || currentLower.includes("verified")) activeIndex = 5;
 
-  const top = el("div", { class: "report-row__top" }, [
-    el("h3", { style: "margin:0; font-size:1.05rem;" }, `${catInfo ? catInfo.emoji + " " : ""}${catInfo ? catInfo.label : report.category}`),
-    el("div", { style: "display:flex; gap:0.5rem; flex-wrap:wrap;" }, [
-      el("span", { class: `badge badge--priority-${report.hybridDecision ? report.hybridDecision.priorityClass : 'medium'}` }, report.operationalPriority || 'P2 - High'),
-      el("span", { class: `badge badge--status-${(report.status || 'pending').toLowerCase()}` }, (report.status || 'pending').replace("_", " ")),
-    ]),
+  const stepperList = el("ol", { class: "lifecycle-stepper" });
+
+  LIFECYCLE_STAGES.forEach((stage, idx) => {
+    let stateClass = "";
+    if (idx < activeIndex) stateClass = "completed";
+    else if (idx === activeIndex) stateClass = "active";
+
+    const stepItem = el("li", { class: `lifecycle-step ${stateClass}` }, [
+      el("span", { style: "display:block; font-size:0.7rem; margin-bottom:0.15rem;" }, stage.icon),
+      el("span", {}, stage.label)
+    ]);
+    stepperList.appendChild(stepItem);
+  });
+
+  return stepperList;
+}
+
+function openPhotoModal(imgSrc, title) {
+  const existing = document.getElementById("photo-modal");
+  if (existing) existing.remove();
+
+  const modal = el("div", {
+    id: "photo-modal",
+    style: "position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; padding:1.5rem;",
+    onclick: (e) => { if (e.target === modal) modal.remove(); }
+  }, [
+    el("div", {
+      style: "background:#FFFFFF; border-radius:8px; padding:1rem; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; gap:0.75rem; box-shadow:0 10px 30px rgba(0,0,0,0.5);"
+    }, [
+      el("div", { style: "display:flex; justify-content:space-between; align-items:center;" }, [
+        el("strong", { style: "font-size:0.95rem; color:#2C3947;" }, title || "Photo Evidence"),
+        el("button", {
+          class: "btn btn--ghost btn--sm",
+          style: "padding:0.2rem 0.5rem;",
+          onclick: () => modal.remove()
+        }, "✕ Close")
+      ]),
+      el("img", {
+        src: imgSrc,
+        style: "max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px;"
+      })
+    ])
   ]);
 
-  row.appendChild(top);
-  row.appendChild(el("p", { style: "margin:0 0 0.5rem;" }, report.description));
-  row.appendChild(el("div", { class: "report-row__meta" }, [
-    el("span", {}, `📍 ${report.location || 'Campus'}`),
-    el("span", {}, `🕒 ${fmtTime(report.createdAt || report.created_at)}`),
-  ]));
+  document.body.appendChild(modal);
+}
 
-  if (report.recommendedAction || report.ai_solution) {
-    const details = el("details");
-    details.appendChild(el("summary", { style: "cursor:pointer; font-weight:700; font-size:0.85rem; color: var(--accent);" }, "View AIOps Analysis & Audit Trail"));
-    const inner = el("div", { style: "margin-top:0.75rem; display:flex; flex-direction:column; gap:0.75rem;" });
-    inner.appendChild(el("p", { style: "margin:0; font-size:0.85rem;" }, [el("strong", {}, "Recommended Playbook: "), report.recommendedAction || report.ai_solution]));
-    inner.appendChild(el("p", { style: "margin:0; font-size:0.85rem;" }, [el("strong", {}, "Reasoning: "), report.rootCause || report.ai_reasoning]));
-    details.appendChild(inner);
-    row.appendChild(details);
+function fmtTime(iso) {
+  if (!iso) return "Just now";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString([], { month: "short", day: "numeric" }) + " at " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    return "Just now";
   }
+}
 
-  return row;
+if (typeof window !== "undefined") {
+  window.quickFillForm = quickFillForm;
+  window.openPhotoModal = openPhotoModal;
 }

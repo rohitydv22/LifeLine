@@ -3,205 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Report an Issue — LifeLine by Cognora</title>
-  <meta name="description" content="Report a hostel or campus infrastructure issue and watch LifeLine's AIOps sandbox engine simulate and rank a fix in real time.">
+  <title>Student Portal — Report a Campus Problem — LifeLine</title>
+  <meta name="description" content="Report a hostel, Wi-Fi, food, water, or campus facility problem and track resolution status in real time.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-
+  <!-- Header -->
   <header class="site-header">
     <div class="container nav-bar">
       <a class="brand" href="index.html">
         <span class="brand__pulse" aria-hidden="true"></span>
-        LifeLine <span class="brand__sub">by Cognora</span>
+        LifeLine <span class="brand__sub">Student Portal</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="report.html" aria-current="page">Report Issue</a>
-        <a href="#my-reports">My Reports</a>
-        <a href="admin.html" target="_blank">Warden Ops Dashboard ↗</a>
-        <a href="#" data-logout>Log out</a>
+        <a href="#my-complaints">My Complaints</a>
+        <a href="admin-login.html" style="color:#A0B0C0;">Operations Portal</a>
+        <a href="#" data-logout style="color:#FCA5A5;">Log out</a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
-    <section class="section" style="padding-top:2rem;">
+    <section class="section" style="padding-top:2rem; padding-bottom:3.5rem;">
       <div class="container container--narrow">
-        <p class="eyebrow">New Incident Ingest</p>
-        <h1 style="margin-bottom:0.25rem;">What's going on, <span id="student-name">there</span>?</h1>
-        <p class="text-muted">Select a category, describe the issue, and attach photo evidence. LifeLine will correlate telemetry and simulate remediation in an isolated sandbox.</p>
 
-        <form id="report-form" novalidate class="card" style="margin-top:1.5rem;">
+        <div style="margin-bottom:1.5rem; text-align:left;">
+          <p class="eyebrow">Student Helpdesk</p>
+          <h1 style="margin-bottom:0.35rem; font-size:1.75rem;">Report a Campus Problem</h1>
+          <p class="text-muted" style="margin:0; font-size:0.9rem;">
+            Logged in as: <strong id="student-name" style="color:var(--heading-color);">Student Resident</strong> · Reports are automatically routed to the responsible department.
+          </p>
+        </div>
+
+        <!-- Quick Sample Inputs Bar -->
+        <div class="card card--tight" style="margin-bottom:1.5rem; background:var(--surface-alt); padding:0.85rem 1.1rem; border:1px solid var(--border);">
+          <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.45rem;">
+            ⚡ Quick 1-Click Sample Reports (Click to autofill):
+          </span>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="quickFillForm('network', 'Wi-Fi is disconnected in my room, unable to connect to router gateway.')">
+              📶 Wi-Fi Issue
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="quickFillForm('food_safety', 'Undercooked food with sour odor and bad taste in dining hall.')">
+              🍽️ Food Safety (Mess)
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="quickFillForm('website', 'Student ERP portal returning HTTP 503 Service Unavailable.')">
+              🌐 Web Portal Down
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="quickFillForm('water', 'Discolored brown water flowing from cooler with foul sulfur smell.')">
+              🚰 Water / Plumbing
+            </button>
+          </div>
+        </div>
+
+        <!-- Student Submission Form -->
+        <form id="report-form" novalidate class="card" style="margin-bottom:2rem; padding:1.75rem; border-radius:var(--radius-lg);">
+          
           <div class="field">
-            <label id="category-label">Category <span class="required-mark">*</span></label>
+            <label id="category-label">Issue Category <span class="required-mark">*</span></label>
             <div class="category-grid" role="radiogroup" aria-labelledby="category-label" id="category-grid"></div>
             <span class="field-error" id="err-category" role="alert"></span>
           </div>
 
           <div class="field">
-            <label for="description">What happened? <span class="required-mark">*</span></label>
-            <textarea id="description" name="description" required placeholder="Describe the issue in detail — e.g. what you saw, heard, or smelled, what services are affected, and when it began."></textarea>
-            <span class="field-error" id="err-description" role="alert"></span>
-          </div>
-
-          <div class="field">
-            <label for="location">Where did this happen? <span class="required-mark">*</span></label>
-            <input type="text" id="location" name="location" required placeholder="e.g. BH-3, Floor 2, Room 214 or Central Mess Hall">
+            <label for="location">Location / Room Number <span class="required-mark">*</span></label>
+            <input type="text" id="location" name="location" required placeholder="e.g. Hostel A, Room 306 or Central Dining Hall">
             <span class="field-error" id="err-location" role="alert"></span>
           </div>
 
           <div class="field">
-            <label for="image">Upload Photo Evidence (optional but recommended)</label>
-            <input type="file" id="image" name="image" accept="image/*">
-            <span class="hint">Photos are persisted to the Admin Evidence Gallery for inspection and hazard verification.</span>
+            <label for="description">Describe the Problem <span class="required-mark">*</span></label>
+            <textarea id="description" name="description" required placeholder="Provide specific details about what is not working..." rows="3"></textarea>
+            <span class="field-error" id="err-description" role="alert"></span>
           </div>
 
-          <button type="submit" class="btn btn--primary btn--block" id="submit-btn">
-            Submit &amp; Run AIOps Sandbox Simulation
+          <div class="field">
+            <label for="image">Upload Photo / Evidence (Optional)</label>
+            <input type="file" id="image" name="image" accept="image/*">
+            <div id="image-preview-container" style="display:none; margin-top:0.6rem; align-items:center; gap:0.75rem;">
+              <img id="image-preview-img" src="" alt="Photo preview" style="width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border);">
+              <span style="font-size:0.8rem; color:var(--text-muted);" id="image-preview-name">Photo attached</span>
+              <button type="button" class="btn btn--ghost btn--sm" id="btn-remove-image" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Remove</button>
+            </div>
+            <span class="hint">Photos help maintenance and safety officers inspect and respond faster.</span>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block" id="submit-btn" style="margin-top:0.75rem; font-weight:700; font-size:1rem; padding:0.75rem;">
+            📨 Submit Complaint
           </button>
         </form>
-      </div>
-    </section>
 
-    <!-- ============================================================
-         SANDBOX CONSOLE — appears once a report is submitted
-         ============================================================ -->
-    <section class="section" id="sandbox-section" hidden>
-      <div class="container container--narrow">
-        <div class="sandbox" id="sandbox">
-          <div class="sandbox__header">
-            <h2 class="sandbox__title">
-              <span class="sandbox__dot" aria-hidden="true"></span>
-              AIOps Sandbox Simulation Console
-            </h2>
-            <span class="sandbox__status-text" id="sandbox-status-text">initializing…</span>
-          </div>
-          <div class="sandbox__body">
-            <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
-              Simulating remediation on a cloned state replica (<code style="color:var(--accent);">structuredClone</code>). Pre-flight checks are verified before recommending action to human wardens.
-            </p>
-            
-            <div class="sandbox__log" id="sandbox-log" role="log" aria-live="polite"></div>
-
-            <div class="sandbox__meter-row">
-              <div class="sandbox__meter">
-                <span class="sandbox__meter-value" id="meter-score">—</span>
-                <span class="sandbox__meter-label">Telemetry Score</span>
+        <!-- Confirmation Banner (Appears after submission) -->
+        <div id="submit-success-box" class="card" style="display:none; margin-bottom:2.25rem; background:#F0FDF4; border:1px solid #86EFAC; padding:1.25rem 1.5rem; border-radius:var(--radius-md);">
+          <div style="display:flex; align-items:flex-start; gap:0.85rem;">
+            <span style="font-size:1.6rem; line-height:1;">✅</span>
+            <div style="flex-grow:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                <strong style="color:#15803D; font-size:1.05rem;" id="success-title">Complaint Submitted Successfully!</strong>
+                <span class="badge badge--status-assigned" id="success-ref-id" style="font-family:var(--font-mono); font-size:0.8rem;">#INC-1042</span>
               </div>
-              <div class="sandbox__meter">
-                <span class="sandbox__meter-value" id="meter-signals">—</span>
-                <span class="sandbox__meter-label">Signals Matched</span>
-              </div>
-              <div class="sandbox__meter">
-                <span class="sandbox__meter-value" id="meter-confidence">—</span>
-                <span class="sandbox__meter-label">NN Model Conf</span>
-              </div>
-              <div class="sandbox__meter">
-                <span class="sandbox__meter-value" id="meter-steps">0/0</span>
-                <span class="sandbox__meter-label">Steps Complete</span>
-              </div>
-            </div>
-
-            <div class="sandbox__result" id="sandbox-result">
-              
-              <!-- Multi-Report Correlation Callout if detected -->
-              <div id="correlation-alert-box" class="modal-warning-box" style="margin-top:0.5rem; margin-bottom:1rem;" hidden>
-                <span style="font-size:1.2rem;">⚠️</span>
-                <span id="correlation-alert-text" style="font-size:0.82rem; color:#fde68a;">Multi-report cluster detected in this zone.</span>
-              </div>
-
-              <div class="cluster" style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem; flex-wrap:wrap;">
-                <span>Operational Priority:</span>
-                <span class="badge" id="op-priority-badge">P2 - HIGH</span>
-                <span class="badge" id="risk-badge">MEDIUM</span>
-                <span id="nn-confidence-pill" class="badge" style="background:rgba(56,189,248,0.15); color:var(--accent,#38bdf8); border:1px solid rgba(56,189,248,0.3);">NN Conf: —</span>
-              </div>
-
-              <!-- Neural Network Probability Distribution Visualizer -->
-              <div class="nn-prob-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border, #334155); border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0;">
-                <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
-                  <span>🧠 Neural Network Softmax Probabilities</span>
-                  <span id="nn-dominant-label" style="font-size: 0.75rem; color: var(--text-muted, #94a3b8);">ML Assistance Model</span>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.8rem;">
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="width: 58px; font-weight: 600; color: #10b981;">LOW</span>
-                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
-                      <div id="prob-bar-low" style="width: 0%; height: 100%; background: #10b981; transition: width 0.6s ease;"></div>
-                    </div>
-                    <span id="prob-val-low" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="width: 58px; font-weight: 600; color: #f59e0b;">MEDIUM</span>
-                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
-                      <div id="prob-bar-medium" style="width: 0%; height: 100%; background: #f59e0b; transition: width 0.6s ease;"></div>
-                    </div>
-                    <span id="prob-val-medium" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="width: 58px; font-weight: 600; color: #ef4444;">HIGH</span>
-                    <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
-                      <div id="prob-bar-high" style="width: 0%; height: 100%; background: #ef4444; transition: width 0.6s ease;"></div>
-                    </div>
-                    <span id="prob-val-high" style="width: 38px; text-align: right; font-variant-numeric: tabular-nums;">0%</span>
-                  </div>
-                </div>
-              </div>
-
-              <h3 style="margin-bottom:0.35rem;">Recommended Playbook</h3>
-              <p id="ai-solution-text"></p>
-              <h3 style="margin-bottom:0.35rem;">Operational Decision Reasoning</h3>
-              <p id="ai-reasoning-text"></p>
-
-              <!-- Automated Authority Email Dispatch Box -->
-              <div id="email-dispatch-box" style="display:none; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin: 1rem 0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                  <strong style="color: var(--accent); font-size:0.85rem; display:flex; align-items:center; gap:0.4rem;">
-                    📧 Automated Authority Work Order Dispatched
-                  </strong>
-                  <span class="badge badge--risk-low" style="font-size:0.68rem;">● SENT (250 OK)</span>
-                </div>
-                <div id="email-dispatch-details" style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
-                  <!-- Populated by report.js -->
-                </div>
-              </div>
-
-              <div class="sandbox__approval-note" id="approval-note">
-                <span aria-hidden="true">🛡️</span>
-                <span id="approval-note-text"></span>
-              </div>
-
-              <a href="#my-reports" class="btn btn--ghost" style="margin-top:1.25rem;">View in My Reports</a>
+              <p style="margin:0.35rem 0 0; font-size:0.88rem; color:var(--text-main); line-height:1.5;" id="success-msg">
+                Your complaint has been recorded and automatically assigned to the responsible department.
+              </p>
             </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ============================================================
-         MY REPORTS
-         ============================================================ -->
-    <section class="section section--alt" id="my-reports">
-      <div class="container">
-        <h2>My Submitted Reports</h2>
-        <div id="my-reports-list" class="stack">
-          <p class="text-faint">Loading your reports…</p>
-        </div>
+        <!-- ============================================================
+             MY COMPLAINTS TRACKING SECTION
+             ============================================================ -->
+        <section id="my-complaints" style="margin-top:2.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.15rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h2 style="font-size:1.35rem; margin:0 0 0.2rem;">📋 My Complaints</h2>
+              <p class="text-muted" style="margin:0; font-size:0.84rem;">Real-time tracking of your submitted reports and authority response.</p>
+            </div>
+            <span class="badge" id="my-reports-count" style="background:var(--status-info-bg); color:var(--primary); font-size:0.8rem; padding:0.35em 0.75em;">0 Complaints</span>
+          </div>
+
+          <div id="my-reports-list" class="stack" style="gap:1rem;">
+            <!-- Populated dynamically by report.js -->
+            <p class="text-faint">Loading your complaints…</p>
+          </div>
+        </section>
+
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — Self-Healing AIOps Controller (SOAIDEATHON-S3).</div>
+    <div class="container site-footer__inner">
+      <div><strong>LifeLine</strong> — Student Operations Helpdesk</div>
+      <div style="display:flex; gap:1rem; font-size:0.82rem;">
+        <a href="admin-login.html">Department Operations</a>
+        <a href="index.html">Platform Home</a>
+      </div>
+    </div>
   </footer>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/campus-state.js"></script>
-  <script src="js/model/risk-model.js"></script>
-  <script src="js/nn-inference.js"></script>
-  <script src="js/ai-engine.js"></script>
   <script src="js/report.js"></script>
 </body>
 </html>

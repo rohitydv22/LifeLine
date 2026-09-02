@@ -3,24 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Login — LifeLine by Cognora</title>
-  <meta name="description" content="Student portal login for reporting and tracking campus infrastructure issues.">
+  <title>Student Sign In — LifeLine</title>
+  <meta name="description" content="Student portal sign in for reporting campus infrastructure issues and tracking real-time resolution.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-
   <header class="site-header">
     <div class="container nav-bar">
       <a class="brand" href="index.html">
         <span class="brand__pulse" aria-hidden="true"></span>
-        LifeLine <span class="brand__sub">by Cognora</span>
+        LifeLine <span class="brand__sub">Campus AIOps</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="index.html">Home</a>
         <a href="login.html" aria-current="page">Student Login</a>
         <a href="register.html">Register</a>
-        <a href="admin-login.html">Staff Login</a>
+        <a href="admin-login.html">Staff &amp; Authority</a>
       </nav>
     </div>
   </header>
@@ -28,46 +26,67 @@
   <main id="main-content">
     <div class="auth-shell">
       <div class="auth-card">
-        <p class="eyebrow">Student Intake Portal</p>
-        <h1 style="margin-bottom:0.25rem;">Student Sign In</h1>
-        <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.88rem;">Log in to submit and track hostel and campus issues in real time.</p>
+        
+        <div class="auth-card__header">
+          <div class="auth-card__logo" aria-hidden="true">🎓</div>
+          <h1 class="auth-card__title">Student Sign In</h1>
+          <p class="auth-card__subtitle">
+            Sign in to submit problem reports and track resolution in real time.
+          </p>
+        </div>
 
-        <form id="login-form" novalidate data-redirect="report.html">
+        <form id="login-form" class="auth-form" novalidate data-redirect="report.html">
           <div class="field">
             <label for="email">Student Email Address</label>
-            <input type="email" id="email" name="email" autocomplete="email" placeholder="student@lifeline.campus" required>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="name@campus.edu" required autofocus>
             <span class="field-error" id="err-email" role="alert"></span>
           </div>
+
           <div class="field">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Enter student password" required>
+            <div class="password-wrapper">
+              <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Enter your password" required>
+              <button type="button" class="password-toggle" id="btn-toggle-password" aria-label="Toggle password visibility">
+                👁️
+              </button>
+            </div>
             <span class="field-error" id="err-password" role="alert"></span>
           </div>
-          <button type="submit" class="btn btn--primary btn--block" id="login-btn">
+
+          <div class="form-row-space">
+            <label>
+              <input type="checkbox" id="remember-me" name="remember">
+              <span>Remember me</span>
+            </label>
+            <a href="#" onclick="showToast('Please contact campus IT administrator to reset your password.', 'info'); return false;">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block" id="login-btn" style="margin-top:0.25rem;">
             Sign In to Student Portal
           </button>
 
-          <div class="auth-divider"><span>OR CONTINUE WITH</span></div>
-
-          <button type="button" class="btn btn--google btn--block" id="btn-google-auth">
-            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-            </svg>
-            Continue with Google
-          </button>
+          <!-- 1-Click Quick Demo Login Chips -->
+          <div style="margin-top:1.25rem; padding:0.85rem; background:rgba(255,255,255,0.03); border:1px solid var(--border-soft); border-radius:var(--radius-sm);">
+            <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.5rem;">
+              ⚡ Quick 1-Click Demo Login:
+            </span>
+            <button type="button" class="btn btn--ghost btn--sm btn--block" style="text-align:left; justify-content:flex-start; font-size:0.82rem; padding:0.4rem 0.6rem;" onclick="document.getElementById('email').value='student@lifeline.campus'; document.getElementById('password').value='student123'; document.getElementById('login-form').requestSubmit();">
+              🎓 <strong>Student Demo</strong>: student@lifeline.campus
+            </button>
+          </div>
         </form>
 
-        <p class="auth-card__foot" style="margin-top:1.25rem;">New student? <a href="register.html">Create an account</a></p>
-        <p class="auth-card__foot">Warden or staff member? <a href="admin-login.html">Staff Login</a></p>
+        <div class="auth-card__foot">
+          <p style="margin:0 0 0.5rem;">New student? <a href="register.html">Create an account</a></p>
+          <p style="margin:0;"><a href="admin-login.html" style="color:var(--text-muted); font-size:0.8rem;">Staff or Authority Sign In →</a></p>
+        </div>
+
       </div>
     </div>
   </main>
 
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+    <div class="container">LifeLine by Cognora — Campus Operations Platform.</div>
   </footer>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

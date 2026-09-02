@@ -3,392 +3,1336 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ops Dashboard &amp; AIOps Controller — LifeLine by Cognora</title>
-  <meta name="description" content="Campus Operations Platform: Incident Management, Sandbox Simulation, Two-Stage Self-Healing, Live Topology, and CCTV Surveillance.">
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <title>Hostel Maintenance &amp; Facilities Console — LifeLine</title>
+  <meta name="description" content="Clean, minimal, animated React console for departmental triage, self-healing, and incident coordination.">
 
-  <!-- Main Site Header -->
-  <header class="site-header">
-    <div class="container nav-bar">
-      <a class="brand" href="index.html">
-        <span class="brand__pulse" aria-hidden="true"></span>
-        LifeLine <span class="brand__sub">AIOps Controller</span>
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="admin.html" aria-current="page">Ops Console</a>
-        <a href="report.html" target="_blank">Student Report View ↗</a>
-        <button id="btn-quick-reset" class="btn btn--ghost btn--sm" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: var(--border);">🔄 Reset Campus State</button>
-        <a href="#" data-logout>Log out</a>
-      </nav>
-    </div>
-  </header>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          },
+          boxShadow: {
+            '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+            'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+            'glow-indigo': '0 0 20px -5px rgba(99, 102, 241, 0.25)',
+            'glow-emerald': '0 0 20px -5px rgba(16, 185, 129, 0.25)',
+            'glow-rose': '0 0 20px -5px rgba(244, 63, 94, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
 
-  <main id="main-content">
-    <section class="section" style="padding-top:1.75rem; padding-bottom:3.5rem;">
-      <div class="container">
-        
-        <!-- Header Strip -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-          <div>
-            <p class="eyebrow">AIOps Governance &amp; Telemetry Controller</p>
-            <h1 style="margin-bottom:0.25rem;">Campus Operations Dashboard</h1>
-            <p class="text-muted" style="margin-bottom:0;">Live student queries, incident triage, AI sandbox testing, CCTV cross-checking, and human-in-the-loop self-healing.</p>
-          </div>
-          <div id="live-pulse-indicator" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
-            <span class="status-dot" style="background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
-            <span>Telemetry Bus: <span style="color: #10b981;">ONLINE (Real-Time Sync)</span></span>
-          </div>
-        </div>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        <!-- Global Live Metric Stat Strip -->
-        <div class="stat-strip" id="stat-strip" style="margin-bottom:1.75rem;">
-          <div class="stat-box">
-            <span class="stat-box__num" id="stat-infra-health">100%</span>
-            <span class="stat-box__label">Infra Health Index</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__num" id="stat-active-incidents" style="color: var(--accent);">0</span>
-            <span class="stat-box__label">Active Incidents</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__num" id="stat-pending-approvals" style="color: #f59e0b;">0</span>
-            <span class="stat-box__label">Awaiting Approval</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__num" id="stat-avg-mttd" style="color: #38bdf8;">2.8s</span>
-            <span class="stat-box__label">Mean Time to Detect (MTTD)</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__num" id="stat-avg-mttr" style="color: #35d68f;">5.4s</span>
-            <span class="stat-box__label">Mean Time to Recover (MTTR)</span>
-          </div>
-        </div>
+  <!-- React 18 & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-        <!-- Navigation Tabs (Incidents first so staff immediately sees student queries) -->
-        <div class="admin-tabs" role="tablist" aria-label="AIOps Sections">
-          <button class="admin-tab-btn active" data-tab="incidents" role="tab" aria-selected="true">
-            🚨 Incidents &amp; Student Reports <span id="badge-incident-count" class="badge" style="padding:0.1em 0.5em; font-size:0.7rem;">0</span>
-          </button>
-          <button class="admin-tab-btn" data-tab="approvals" role="tab" aria-selected="false">
-            🛡️ Approvals &amp; Self-Healing
-          </button>
-          <button class="admin-tab-btn" data-tab="topology" role="tab" aria-selected="false">
-            🌐 Live Campus Topology
-          </button>
-          <button class="admin-tab-btn" data-tab="faults" role="tab" aria-selected="false">
-            ⚡ Fault Injection Console <span id="badge-fault-count" class="badge badge--risk-high" style="padding:0.1em 0.5em; font-size:0.7rem;">13 Scenarios</span>
-          </button>
-          <button class="admin-tab-btn" data-tab="cctv" role="tab" aria-selected="false">
-            📹 CCTV Surveillance &amp; Safety Cross-Check
-          </button>
-          <button class="admin-tab-btn" data-tab="ai-matrix" role="tab" aria-selected="false">
-            🧠 Hybrid AI Decision Inspector
-          </button>
-          <button class="admin-tab-btn" data-tab="work-orders" role="tab" aria-selected="false">
-            🔧 Facilities Work Orders
-          </button>
-          <button class="admin-tab-btn" data-tab="evidence" role="tab" aria-selected="false">
-            📸 Photo Evidence Gallery
-          </button>
-          <button class="admin-tab-btn" data-tab="metrics" role="tab" aria-selected="false">
-            📊 Real MTTD / MTTR Metrics
-          </button>
-          <button class="admin-tab-btn" data-tab="audit" role="tab" aria-selected="false">
-            📜 Unified Audit Trail
-          </button>
-        </div>
+  <!-- Framer Motion -->
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
-        <!-- ===================================================================
-             TAB 1: INCIDENTS & STUDENT REPORTS (DEFAULT ACTIVE VIEW)
-             =================================================================== -->
-        <div id="pane-incidents" class="admin-tab-pane">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Active Incidents &amp; Student Ingest Stream</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Student query submissions, automated telemetry correlation, sandbox simulation logs, and status controls.</p>
-            </div>
-            
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <div class="filter-bar" id="status-filters" role="group" aria-label="Filter by status" style="margin:0;">
-                <button class="filter-chip" data-status="all" aria-pressed="true">All</button>
-                <button class="filter-chip" data-status="pending" aria-pressed="false">Pending / Detected</button>
-                <button class="filter-chip" data-status="in_review" aria-pressed="false">Awaiting Approval</button>
-                <button class="filter-chip" data-status="approved" aria-pressed="false">Approved</button>
-                <button class="filter-chip" data-status="resolved" aria-pressed="false">Resolved</button>
-              </div>
-            </div>
-          </div>
+  <!-- Babel Compiler for Browser JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-          <div id="admin-reports-list" class="stack">
-            <p class="text-faint">Loading incidents…</p>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 2: APPROVALS & SELF-HEALING CONTROLLER
-             =================================================================== -->
-        <div id="pane-approvals" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Self-Healing Controller &amp; Human Approval Queue</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Enforcing Human Governance Gate: AI sandbox rehearses fixes on cloned state. Wardens grant approval, review operational disclaimers, and trigger live self-healing.
-            </p>
-          </div>
-
-          <div id="approval-queue-list" class="stack">
-            <!-- Populated by admin.js -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 3: LIVE CAMPUS TOPOLOGY
-             =================================================================== -->
-        <div id="pane-topology" class="admin-tab-pane" hidden>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Infrastructure Telemetry Graph</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Live state of all mission-critical digital systems, power, water, and student facilities.</p>
-            </div>
-            <span class="text-faint" style="font-size: 0.8rem;">Auto-updates on state mutation</span>
-          </div>
-
-          <div class="topology-grid" id="topology-grid">
-            <!-- Rendered by admin.js -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 4: FAULT INJECTION CONSOLE
-             =================================================================== -->
-        <div id="pane-faults" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Operational Fault Injection Console</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Trigger real-world fault simulations across Digital, Physical, and Safety systems. Each injection mutates live state, starts MTTD detection timers, computes Hybrid Priority, and generates recovery candidates.
-            </p>
-          </div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: var(--accent); margin: 0;">🌐 Digital Infrastructure Faults (Auto Self-Healable via Sandbox &amp; Approval)</h3>
-            <span class="badge badge--risk-medium">7 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-digital"></div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: #f59e0b; margin: 0;">💧 Physical Infrastructure Incidents (Dispatches Facilities &amp; Civil Work Orders)</h3>
-            <span class="badge badge--risk-medium">3 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-physical"></div>
-
-          <div class="fault-section-header">
-            <h3 style="font-size: 1rem; color: #ef4444; margin: 0;">🍱 Mess Food, Water &amp; Health Safety (Urgent Human Inspection)</h3>
-            <span class="badge badge--risk-high">3 Scenarios</span>
-          </div>
-          <div class="fault-grid" id="fault-grid-safety"></div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 5: CCTV SURVEILLANCE & SAFETY CROSS-CHECKING (Staff Only)
-             =================================================================== -->
-        <div id="pane-cctv" class="admin-tab-pane" hidden>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Restricted CCTV Surveillance &amp; Safety Cross-Check</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Authority multi-feed surveillance. Cross-check live camera feeds against incident reports before approving work orders or self-healing.</p>
-            </div>
-            <div style="display:flex; gap:0.5rem; align-items:center;">
-              <span class="badge badge--risk-low">● 4 FEEDS ONLINE</span>
-              <button id="btn-refresh-cctv" class="btn btn--ghost btn--sm" style="font-size:0.78rem;">🔄 Sync Feeds</button>
-            </div>
-          </div>
-
-          <!-- CCTV Multi-Feed Matrix -->
-          <div class="cctv-matrix" id="cctv-matrix-container">
-            <!-- Camera feeds rendered by admin.js -->
-          </div>
-
-          <!-- Incident Visual Cross-Checking Workspace -->
-          <div class="cctv-crosscheck-panel card" style="margin-top:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
-              <h3 style="margin:0; font-size:1.05rem;">🔍 Authority Incident Visual Cross-Check</h3>
-              <span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3);">Mandatory Verification Gate</span>
-            </div>
-            <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
-              Select an active reported incident to inspect the physical zone camera. Cross-verify physical hazards (e.g. smoke, water pooling, food cleanliness) against student claims.
-            </p>
-
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap:1rem; align-items:end;">
-              <div class="field" style="margin:0;">
-                <label for="cctv-incident-selector">Select Active Incident to Cross-Check</label>
-                <select id="cctv-incident-selector" class="input" style="width:100%;">
-                  <!-- Populated by admin.js -->
-                </select>
-              </div>
-
-              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" id="btn-cctv-verify" class="btn btn--primary btn--sm" style="background:#10b981; border-color:#10b981; color:#04140c;">
-                  ✓ Confirm Visual Match &amp; Stamp Audit
-                </button>
-                <button type="button" id="btn-cctv-flag" class="btn btn--ghost btn--sm" style="border-color:#ef4444; color:#ef4444;">
-                  ⚠️ Flag Visual Discrepancy
-                </button>
-              </div>
-            </div>
-
-            <div id="cctv-crosscheck-result" style="margin-top:1rem; font-size:0.85rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); display:none;">
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 6: HYBRID AI DECISION INSPECTOR
-             =================================================================== -->
-        <div id="pane-ai-matrix" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Hybrid Decision Engine vs. Neural Network Inspector</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Understanding how LifeLine combines raw Neural Network predictions with 7 real-time context factors (service criticality, student impact, users affected, safety risk, location scope, live infra status, and report correlation) to formulate operational decisions.
-            </p>
-          </div>
-
-          <div id="ai-breakdown-container" class="stack">
-            <!-- Populated by admin.js -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 7: FACILITIES WORK ORDERS
-             =================================================================== -->
-        <div id="pane-work-orders" class="admin-tab-pane" hidden>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Facilities, Plumbing &amp; Food Safety Work Orders</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">Lifecycle tracking for physical campus assets: Reported → Notified → Assigned → In Progress → Resolved.</p>
-            </div>
-          </div>
-
-          <div class="card card--tight">
-            <table class="work-orders-table" id="work-orders-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Department</th>
-                  <th>Title &amp; Scope</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Assigned To</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="work-orders-tbody">
-                <!-- Rendered by admin.js -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Automated Authority Email Dispatch Ledger -->
-          <div class="card" style="margin-top: 1.5rem; background: var(--surface);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
-              <div>
-                <h3 style="margin:0; font-size:1.05rem;">📨 Automated Authority Email Dispatch Ledger</h3>
-                <p class="text-muted" style="margin:0; font-size:0.8rem;">
-                  Real-time log of work orders auto-dispatched to department heads (Electrical, Water Works, Food Safety, Fire Marshall, Sanitation, Civil) immediately upon AI root cause classification.
-                </p>
-              </div>
-              <span class="badge badge--risk-low">● SMTP RELAY ACTIVE</span>
-            </div>
-
-            <div id="dispatched-emails-list" class="stack" style="gap:0.75rem;">
-              <!-- Populated by admin.js -->
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 8: PHOTO EVIDENCE GALLERY
-             =================================================================== -->
-        <div id="pane-evidence" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Student Photo Evidence &amp; Hazard Visuals</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Photos uploaded by students during incident ingestion, indexed for physical verification, mess food inspections, and audit compliance.
-            </p>
-          </div>
-
-          <div class="evidence-grid" id="evidence-grid">
-            <!-- Rendered by admin.js -->
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 9: REAL MTTD / MTTR METRICS
-             =================================================================== -->
-        <div id="pane-metrics" class="admin-tab-pane" hidden>
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.25rem; margin: 0;">Operational Efficiency &amp; Recovery Timelines</h2>
-            <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-              Real-time measurement of Mean Time to Detect (MTTD) and Mean Time to Recover (MTTR). Never hard-coded; computed dynamically from injection and recovery timestamps.
-            </p>
-          </div>
-
-          <div class="metrics-grid">
-            <div class="card metric-hero-card">
-              <span class="metric-hero__label">Average Detection Speed</span>
-              <div class="metric-hero__value" id="metric-hero-mttd" style="color: #38bdf8;">2.8s</div>
-              <p class="text-muted" style="font-size: 0.85rem;">From telemetry anomaly onset to incident creation.</p>
-              
-              <div class="metric-history-list" id="mttd-history-list"></div>
-            </div>
-
-            <div class="card metric-hero-card">
-              <span class="metric-hero__label">Average Recovery Speed</span>
-              <div class="metric-hero__value" id="metric-hero-mttr" style="color: #35d68f;">5.4s</div>
-              <p class="text-muted" style="font-size: 0.85rem;">From approval confirmation to verified healthy state.</p>
-              
-              <div class="metric-history-list" id="mttr-history-list"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===================================================================
-             TAB 10: UNIFIED AUDIT TRAIL
-             =================================================================== -->
-        <div id="pane-audit" class="admin-tab-pane" hidden>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <div>
-              <h2 style="font-size: 1.25rem; margin: 0;">Comprehensive System &amp; Governance Audit Trail</h2>
-              <p class="text-muted" style="margin: 0; font-size: 0.85rem;">
-                Immutable chronological ledger recording all lifecycle events: Injected, Detected, Reported, Analyzed, Sandboxed, Approved, Confirmed, Recovered, and Verified.
-              </p>
-            </div>
-            <button id="btn-clear-audit" class="btn btn--ghost btn--sm" style="font-size:0.8rem;">Export / Archive</button>
-          </div>
-
-          <div class="card card--tight">
-            <div id="unified-audit-list" class="stack">
-              <!-- Populated by admin.js -->
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — Campus AIOps Controller.</div>
-  </footer>
-
-  <!-- Scripts -->
+  <!-- Core LifeLine Engine Scripts -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/campus-state.js"></script>
-  <script src="js/model/risk-model.js"></script>
-  <script src="js/nn-inference.js"></script>
-  <script src="js/ai-engine.js"></script>
-  <script src="js/admin.js"></script>
+</head>
+<body class="bg-[#FAFAFA] text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+    const { motion, AnimatePresence } = window.Motion || window.framerMotion || {};
+
+    const MotionDiv = (motion && motion.div) ? motion.div : 'div';
+    const MotionButton = (motion && motion.button) ? motion.button : 'button';
+
+    // SVG Line Icons (Crisp Lucide replacements)
+    const Icon = ({ name, className = "w-4 h-4" }) => {
+      const icons = {
+        activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>',
+        globe: '<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>',
+        wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line>',
+        utensils: '<path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path><path d="M12 2v20"></path><path d="M21 15v7"></path><path d="M21 15a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7"></path>',
+        droplets: '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.09 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path>',
+        wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>',
+        zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>',
+        alertCircle: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
+        alertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>',
+        checkCircle2: '<circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path>',
+        clock: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
+        inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>',
+        chevronDown: '<polyline points="6 9 12 15 18 9"></polyline>',
+        chevronUp: '<polyline points="18 15 12 9 6 15"></polyline>',
+        terminal: '<polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>',
+        plus: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+        x: '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>',
+        shieldCheck: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path>',
+        rotateCcw: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path>',
+        sparkles: '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>',
+        arrowRight: '<line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>',
+        check: '<polyline points="20 6 9 17 4 12"></polyline>',
+        serverCrash: '<path d="M6 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"></path><path d="M6 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"></path><path d="M6 6h.01"></path><path d="M6 18h.01"></path><path d="m14 11-4 4"></path><path d="m10 11 4 4"></path>',
+        flaskConical: '<path d="M10 2v4.5L4.36 17.5a2 2 0 0 0 1.74 3h11.8a2 2 0 0 0 1.74-3L14 6.5V2"></path><path d="M8.5 2h7"></path><path d="M7 15h10"></path>',
+        signature: '<path d="m21 17-2.15-2.15a2.5 2.5 0 0 0-3.54 0L4 26"></path><path d="M14 6.5 17.5 10"></path><path d="m3 21 6.5-6.5"></path><path d="M11 13a4 4 0 0 0 5.66 0"></path>',
+        shieldAlert: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
+        search: '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>',
+        userCheck: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline>',
+        send: '<line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>'
+      };
+
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+          dangerouslySetInnerHTML={{ __html: icons[name] || icons.activity }}
+        />
+      );
+    };
+
+    // Animated CountUp for Stat Numbers
+    const CountUp = ({ value, duration = 350 }) => {
+      const [count, setCount] = useState(0);
+
+      useEffect(() => {
+        let start = 0;
+        const end = parseInt(value, 10) || 0;
+        if (start === end) {
+          setCount(end);
+          return;
+        }
+        const totalSteps = 14;
+        const stepTime = Math.max(10, Math.floor(duration / totalSteps));
+        let currentStep = 0;
+
+        const timer = setInterval(() => {
+          currentStep++;
+          const progress = currentStep / totalSteps;
+          const currentVal = Math.round(start + (end - start) * progress);
+          setCount(currentVal);
+
+          if (currentStep >= totalSteps) {
+            clearInterval(timer);
+            setCount(end);
+          }
+        }, stepTime);
+
+        return () => clearInterval(timer);
+      }, [value, duration]);
+
+      return <span>{count}</span>;
+    };
+
+    // ========================================================================
+    // DEDICATED DIGITAL SELF-HEALING RECOVERY LAB COMPONENT
+    // ========================================================================
+    function DigitalSelfHealingLab({
+      serviceHealth,
+      onInjectOutage,
+      onRunSandbox,
+      onApprove,
+      onExecuteRecovery,
+      sandboxPassed,
+      approvalGranted,
+      isRecovering,
+      logs
+    }) {
+      const isDown = serviceHealth.websiteService === 'down';
+      const isHealthy = serviceHealth.websiteService === 'healthy';
+
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+          {/* Header Banner */}
+          <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                  Controlled Digital AIOps Engine
+                </span>
+                <span className="text-xs text-slate-400 font-mono">Port 8080 · Cluster Web-01</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                <Icon name="globe" className="w-5 h-5 text-indigo-400" />
+                Campus Web Service &amp; ERP Self-Healing Lab
+              </h2>
+              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                Autonomous fault detection, sandboxed staging dry-run rehearsal, authority sign-off gate, and live HTTP GET probe verification.
+              </p>
+            </div>
+
+            {/* Live Service Health Status Pill */}
+            <div className="shrink-0 flex items-center gap-2.5 bg-slate-800/80 px-4 py-2.5 rounded-xl border border-slate-700/80 shadow-inner">
+              <span className="relative flex h-3 w-3">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isHealthy ? 'bg-emerald-400' : 'bg-rose-400'
+                }`}></span>
+                <span className={`relative inline-flex rounded-full h-3 w-3 ${
+                  isHealthy ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}></span>
+              </span>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Live Probe State
+                </span>
+                <span className={`text-xs font-bold font-mono ${
+                  isHealthy ? 'text-emerald-400' : 'text-rose-400'
+                }`}>
+                  {isHealthy ? 'HTTP 200 OK (Healthy)' : 'HTTP 503 Outage'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4-Step Visual Journey Pipeline */}
+          <div className="p-5 sm:p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              
+              {/* Step 1: Detect Outage */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                isDown
+                  ? 'bg-rose-50/70 border-rose-300 ring-1 ring-rose-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider font-mono">01. FAULT PROBE</span>
+                  {isDown && <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />}
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 mb-1">Outage Detection</h4>
+                <p className="text-[11px] text-slate-600 leading-snug">
+                  {isDown ? 'HTTP GET /healthz failed (Socket pool exhausted)' : 'Continuous daemon probe listening.'}
+                </p>
+                <div className="mt-3">
+                  <button
+                    onClick={onInjectOutage}
+                    disabled={isDown}
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                      isDown
+                        ? 'bg-rose-200 text-rose-800 opacity-60 cursor-not-allowed'
+                        : 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm'
+                    }`}
+                  >
+                    {isDown ? '💥 Outage Active' : '💥 1. Inject Outage (503)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2: Sandbox Testing */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                sandboxPassed
+                  ? 'bg-emerald-50/70 border-emerald-300'
+                  : isDown
+                  ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider font-mono">02. SANDBOX DRY-RUN</span>
+                  {sandboxPassed ? (
+                    <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                      <Icon name="check" className="w-3.5 h-3.5 stroke-[3]" /> Passed
+                    </span>
+                  ) : isDown ? (
+                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                  ) : null}
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 mb-1">Staging Rehearsal</h4>
+                <p className="text-[11px] text-slate-600 leading-snug">
+                  {sandboxPassed ? '4/4 pre-flight replica assertions passed.' : 'Test container replica without risking production.'}
+                </p>
+                <div className="mt-3">
+                  <button
+                    onClick={onRunSandbox}
+                    disabled={!isDown || sandboxPassed}
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                      sandboxPassed
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : isDown
+                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {sandboxPassed ? '🧪 Rehearsal PASSED' : '🧪 2. Run Sandbox Test'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 3: Authority Approval Gate */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                approvalGranted
+                  ? 'bg-emerald-50/70 border-emerald-300'
+                  : sandboxPassed
+                  ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider font-mono">03. GOVERNANCE GATE</span>
+                  {approvalGranted ? (
+                    <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                      <Icon name="check" className="w-3.5 h-3.5 stroke-[3]" /> Signed
+                    </span>
+                  ) : sandboxPassed ? (
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  ) : null}
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 mb-1">Authority Approval</h4>
+                <p className="text-[11px] text-slate-600 leading-snug">
+                  {approvalGranted ? 'Authorized by Chief Warden & IT Lead.' : 'High-impact safeguard prevents unverified restarts.'}
+                </p>
+                <div className="mt-3">
+                  <button
+                    onClick={onApprove}
+                    disabled={!sandboxPassed || approvalGranted}
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                      approvalGranted
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : sandboxPassed
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {approvalGranted ? '✍️ Sign-off Granted' : '✍️ 3. Grant Approval'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 4: Live Recovery & Verification Probe */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                isHealthy && !isDown
+                  ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-200'
+                  : approvalGranted
+                  ? 'bg-slate-900 text-white border-slate-900 ring-1 ring-slate-800'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider font-mono">04. RECOVERY &amp; PROBE</span>
+                  {isHealthy && !isDown ? (
+                    <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                      <Icon name="checkCircle2" className="w-3.5 h-3.5" /> 200 OK
+                    </span>
+                  ) : approvalGranted ? (
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  ) : null}
+                </div>
+                <h4 className={`text-xs font-bold mb-1 ${approvalGranted ? 'text-white' : 'text-slate-900'}`}>
+                  Live Restart &amp; Probe
+                </h4>
+                <p className={`text-[11px] leading-snug ${approvalGranted ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {isHealthy && !isDown ? 'Restoration verified via live HTTP probe (14ms).' : 'Execute container restart and verify recovery.'}
+                </p>
+                <div className="mt-3">
+                  <button
+                    onClick={onExecuteRecovery}
+                    disabled={!approvalGranted || (isHealthy && !isDown) || isRecovering}
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                      isHealthy && !isDown
+                        ? 'bg-emerald-600 text-white'
+                        : approvalGranted
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold shadow-md animate-pulse'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isRecovering ? '⚡ Executing Probe...' : isHealthy && !isDown ? '✅ Verified Healthy' : '⚡ 4. Execute Live Recovery'}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Live Terminal Streaming Log Strip */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span className="font-semibold flex items-center gap-1.5">
+                  <Icon name="terminal" className="w-3.5 h-3.5 text-slate-500" />
+                  Real-Time AIOps Diagnostic &amp; Verification Stream
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono">http://campus.edu:8080/healthz</span>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-950 text-slate-200 font-mono text-xs space-y-1.5 max-h-48 overflow-y-auto shadow-inner border border-slate-800">
+                {logs.map((log, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                    <span className="text-slate-500 select-none text-[11px]">[{log.time}]</span>
+                    <span className={
+                      log.type === 'error' ? 'text-rose-400 font-medium' :
+                      log.type === 'sandbox' ? 'text-indigo-300' :
+                      log.type === 'approval' ? 'text-amber-300 font-medium' :
+                      log.type === 'success' ? 'text-emerald-400 font-bold' :
+                      'text-slate-300'
+                    }>
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // MAIN APP CONTAINER
+    // ========================================================================
+    function HostelFacilitiesConsoleApp() {
+      const [userProfile, setUserProfile] = useState({
+        name: 'Er. Ramesh K. Sharma',
+        role: 'Hostel Authority',
+        dept: 'hostel',
+        deptLabel: 'Hostel Maintenance & Facilities'
+      });
+
+      const SCENARIOS = [
+        { id: 'web_outage', title: 'Web Outage', subtitle: 'Digital Self-Healing', iconName: 'serverCrash', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', dept: 'it' },
+        { id: 'wifi_surge', title: 'Wi-Fi Surge', subtitle: '5 Clustered Reports', iconName: 'wifi', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', dept: 'it' },
+        { id: 'food_safety', title: 'Mess Food Alert', subtitle: 'P1 Safety Escalation', iconName: 'utensils', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', dept: 'mess' },
+        { id: 'water_hazard', title: 'Water Contamination', subtitle: 'Civil Work Order', iconName: 'droplets', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', dept: 'hostel' }
+      ];
+
+      const [selectedScenario, setSelectedScenario] = useState('web_outage');
+      const [selectedDept, setSelectedDept] = useState('all');
+      const [expandedIssueId, setExpandedIssueId] = useState(null);
+      const [isNewReportModalOpen, setIsNewReportModalOpen] = useState(false);
+      const [staffNotesInput, setStaffNotesInput] = useState('');
+
+      // Digital Lab Workflow States
+      const [sandboxPassed, setSandboxPassed] = useState(false);
+      const [approvalGranted, setApprovalGranted] = useState(false);
+      const [isRecovering, setIsRecovering] = useState(false);
+      const [digitalLogs, setDigitalLogs] = useState([
+        { time: '10:00:02', type: 'info', message: '[PROBE DAEMON] Monitoring http://campus.edu:8080/healthz (200 OK | Latency: 12ms)' },
+        { time: '10:00:15', type: 'info', message: '[SOCKET POOL] Active connections: 24/50 DB sockets healthy.' }
+      ]);
+
+      // Reports and Incidents from Central State Engine
+      const [reports, setReports] = useState([]);
+      const [incidents, setIncidents] = useState([]);
+      const [serviceHealth, setServiceHealth] = useState({ websiteService: 'healthy', httpStatusCode: 200 });
+
+      const refreshData = useCallback(() => {
+        if (typeof CampusStateEngine !== 'undefined') {
+          const loadedReports = CampusStateEngine.loadStudentReports();
+          const loadedIncidents = CampusStateEngine.loadIncidents();
+          const loadedHealth = CampusStateEngine.loadServiceHealth();
+          setReports(loadedReports);
+          setIncidents(loadedIncidents);
+          setServiceHealth(loadedHealth);
+        }
+      }, []);
+
+      useEffect(() => {
+        if (typeof getStaffSession === 'function') {
+          const session = getStaffSession();
+          if (session && session.profile) {
+            setUserProfile(session.profile);
+            if (session.profile.department && session.profile.department !== 'admin' && session.profile.department !== 'student') {
+              setSelectedDept(session.profile.department);
+            }
+          }
+        }
+
+        // Pre-seed sample reports if storage is empty
+        if (typeof CampusStateEngine !== 'undefined') {
+          const existing = CampusStateEngine.loadStudentReports();
+          if (!existing || existing.length === 0) {
+            CampusStateEngine.addStudentReport({
+              category: 'website',
+              student_id: 'usr-std-01',
+              student_name: 'Alex Kumar',
+              location: 'Core Campus Web Portal',
+              description: 'ERP portal returning HTTP 503 Service Unavailable.'
+            });
+            CampusStateEngine.addStudentReport({
+              category: 'network',
+              student_id: 'usr-std-02',
+              student_name: 'Rohan Sharma',
+              location: 'Hostel A, Room 306',
+              description: 'Wi-Fi AP disconnected in Hostel A 3rd floor wing.'
+            });
+            CampusStateEngine.addStudentReport({
+              category: 'food_safety',
+              student_id: 'usr-std-03',
+              student_name: 'Priya Patel',
+              location: 'Central Dining Hall',
+              description: 'Suspected sour food contamination in dinner service.'
+            });
+            CampusStateEngine.addStudentReport({
+              category: 'water',
+              student_id: 'usr-std-04',
+              student_name: 'Sneha Patel',
+              location: 'Hostel BH-2, 1st Floor Cooler',
+              description: 'Water dispenser discharging brown water with sulfur odor.'
+            });
+          }
+        }
+
+        refreshData();
+
+        if (typeof CampusStateEngine !== 'undefined' && CampusStateEngine.subscribe) {
+          CampusStateEngine.subscribe(() => {
+            refreshData();
+          });
+        }
+      }, []);
+
+      // Digital Lab Actions
+      const handleInjectOutage = () => {
+        CampusStateEngine.simulateWebServiceOutage();
+        setSandboxPassed(false);
+        setApprovalGranted(false);
+        setDigitalLogs(prev => [
+          ...prev,
+          { time: new Date().toLocaleTimeString(), type: 'error', message: '🚨 [CRITICAL OUTAGE] HTTP GET /healthz returned 503 Service Unavailable (Container socket crash).' }
+        ]);
+        refreshData();
+      };
+
+      const handleRunSandbox = async () => {
+        const time = new Date().toLocaleTimeString();
+        setDigitalLogs(prev => [
+          ...prev,
+          { time, type: 'sandbox', message: '🧪 [SANDBOX TEST] Initializing isolated container replica on port 8089...' }
+        ]);
+
+        await new Promise(r => setTimeout(r, 600));
+
+        const time2 = new Date().toLocaleTimeString();
+        setSandboxPassed(true);
+        setDigitalLogs(prev => [
+          ...prev,
+          { time: time2, type: 'sandbox', message: '✅ [SANDBOX PASSED] 4/4 assertions valid: DB Pool reset OK, reverse proxy route verified, 0 errors on replica.' }
+        ]);
+      };
+
+      const handleGrantApproval = () => {
+        const time = new Date().toLocaleTimeString();
+        setApprovalGranted(true);
+        setDigitalLogs(prev => [
+          ...prev,
+          { time, type: 'approval', message: `✍️ [GOVERNANCE SIGN-OFF] Authorized by ${userProfile.name} (Chief Warden / IT Authority) for production container live restart.` }
+        ]);
+      };
+
+      const handleExecuteRecovery = async () => {
+        setIsRecovering(true);
+        const time = new Date().toLocaleTimeString();
+        setDigitalLogs(prev => [
+          ...prev,
+          { time, type: 'info', message: '⚡ [RECOVERY INITIATED] Restarting production container "campus-web-prod" and flushing stale socket pool...' }
+        ]);
+
+        await CampusStateEngine.executeWebServiceRecovery(null, () => {});
+
+        const time2 = new Date().toLocaleTimeString();
+        setIsRecovering(false);
+        setSandboxPassed(false);
+        setApprovalGranted(false);
+        setDigitalLogs(prev => [
+          ...prev,
+          { time: time2, type: 'success', message: '✅ [VERIFIED 200 OK] Live HTTP GET /healthz probe returned 200 OK (Latency: 14ms | Measured MTTR: 2.4s). Web service fully restored!' }
+        ]);
+        refreshData();
+      };
+
+      // Handle 1-Click Demo Triggers
+      const handleScenarioSelect = (scenarioId) => {
+        setSelectedScenario(scenarioId);
+        const sc = SCENARIOS.find(s => s.id === scenarioId);
+        if (sc) setSelectedDept(sc.dept);
+
+        if (scenarioId === 'web_outage') {
+          handleInjectOutage();
+        } else if (scenarioId === 'wifi_surge') {
+          for (let i = 1; i <= 5; i++) {
+            CampusStateEngine.addStudentReport({
+              category: 'network',
+              student_id: `usr-std-0${i}`,
+              student_name: `Resident ${i}`,
+              location: 'Hostel A',
+              description: `Wi-Fi signal dropped in Hostel A Room 30${i}.`
+            });
+          }
+          refreshData();
+        } else if (scenarioId === 'food_safety') {
+          CampusStateEngine.addStudentReport({
+            category: 'food_safety',
+            student_id: 'usr-std-07',
+            student_name: 'Rahul Verma',
+            location: 'Central Dining Hall',
+            description: 'Severe food contamination suspected in dinner. Sour smell and nausea.'
+          });
+          refreshData();
+        } else if (scenarioId === 'water_hazard') {
+          CampusStateEngine.addStudentReport({
+            category: 'water',
+            student_id: 'usr-std-08',
+            student_name: 'Sneha Patel',
+            location: 'Hostel BH-2, 1st Floor Cooler',
+            description: 'Water dispenser discharging discolored brown water with heavy odor.'
+          });
+          refreshData();
+        }
+      };
+
+      const handlePhysicalStatusUpdate = (issueId, newStatus) => {
+        CampusStateEngine.updateComplaintStatus(
+          issueId,
+          newStatus,
+          userProfile.name,
+          userProfile.role,
+          staffNotesInput
+        );
+        setStaffNotesInput('');
+        refreshData();
+      };
+
+      const handleReset = () => {
+        CampusStateEngine.resetAllCampusState();
+        setSelectedScenario('web_outage');
+        setSelectedDept('all');
+        setSandboxPassed(false);
+        setApprovalGranted(false);
+        setDigitalLogs([
+          { time: new Date().toLocaleTimeString(), type: 'info', message: '[SYSTEM RESET] Campus baseline restored to Healthy state.' }
+        ]);
+        refreshData();
+      };
+
+      const handleAddNewReport = (formData) => {
+        const rep = CampusStateEngine.addStudentReport({
+          category: formData.category,
+          student_id: 'usr-std-demo',
+          student_name: 'Alex Kumar',
+          location: formData.location,
+          description: formData.description
+        });
+        refreshData();
+        setExpandedIssueId(rep.id);
+        setIsNewReportModalOpen(false);
+      };
+
+      // Physical / Hardware complaints
+      const displayItems = useMemo(() => {
+        const { reports: filteredReps, incidents: filteredIncs } = CampusStateEngine.getDepartmentComplaints(selectedDept);
+        return filteredIncs.length > 0 ? filteredIncs : filteredReps;
+      }, [reports, incidents, selectedDept]);
+
+      const activeCount = reports.filter(r => !['Resolved', 'Verified / Closed', 'RESOLVED'].includes(r.status)).length;
+      const highPriorityCount = reports.filter(r => (r.operationalPriority?.includes('Critical') || r.operationalPriority?.includes('High') || r.isUrgentSafety) && !['Resolved', 'Verified / Closed'].includes(r.status)).length;
+      const inProgressCount = reports.filter(r => ['Action in Progress', 'Under Investigation', 'SANDBOXED', 'APPROVED'].includes(r.status)).length;
+      const resolvedTodayCount = reports.filter(r => ['Resolved', 'Verified / Closed', 'RESOLVED'].includes(r.status)).length;
+
+      const DEPARTMENTS = [
+        { id: 'all', label: 'All Departments', iconName: 'activity', count: reports.length },
+        { id: 'it', label: 'IT & Network', iconName: 'globe', count: reports.filter(r => r.department === 'it' || r.isDigital || r.category === 'network' || r.category === 'website').length },
+        { id: 'hostel', label: 'Hostel & Facilities', iconName: 'wrench', count: reports.filter(r => r.department === 'hostel' || (!r.isDigital && r.category !== 'food_safety' && r.category !== 'mess_food')).length },
+        { id: 'mess', label: 'Mess & Food Safety', iconName: 'utensils', count: reports.filter(r => r.department === 'mess' || r.category === 'food_safety' || r.category === 'mess_food').length },
+        { id: 'admin', label: 'Campus Administration', iconName: 'shieldCheck', count: reports.filter(r => r.isUrgentSafety || r.operationalPriority?.includes('Critical') || r.operationalPriority?.includes('High')).length }
+      ];
+
+      return (
+        <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans p-4 sm:p-6 lg:p-8">
+          <div className="max-w-6xl mx-auto space-y-6">
+            
+            {/* Header Bar */}
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+              <div className="flex items-start gap-3.5">
+                <div className="relative mt-1">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-slate-900 tracking-tight">
+                    Hostel Maintenance &amp; Facilities Console
+                  </h1>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    Logged in as <strong className="text-slate-700 font-medium">{userProfile.name}</strong> ({userProfile.role || 'Hostel Authority'}) · Real-time departmental triage
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+                <MotionButton
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleReset}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors shadow-sm"
+                >
+                  <Icon name="rotateCcw" className="w-3.5 h-3.5 text-slate-400" />
+                  Reset State
+                </MotionButton>
+                <a
+                  href="report.html"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors shadow-sm"
+                >
+                  Student Helpdesk
+                </a>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-sm">
+                  <Icon name="shieldCheck" className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{userProfile.deptLabel || 'Operations Authority'}</span>
+                </div>
+              </div>
+            </header>
+
+            {/* 1-Click Demo Scenarios */}
+            <section className="bg-slate-100/70 p-5 rounded-2xl border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    1-Click Demo Scenarios
+                  </span>
+                  <span className="text-xs text-slate-400">· Real Inputs &amp; Live Logic</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-white text-slate-600 border border-slate-200 shadow-2xs">
+                  <Icon name="sparkles" className="w-3 h-3 text-indigo-500" />
+                  Instant Test Triggers
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {SCENARIOS.map(sc => (
+                  <MotionButton
+                    key={sc.id}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleScenarioSelect(sc.id)}
+                    className={`relative flex items-center gap-3 p-3.5 rounded-2xl text-left border transition-all duration-200 ${
+                      selectedScenario === sc.id
+                        ? 'bg-white border-slate-900 shadow-md ring-1 ring-slate-900/10'
+                        : 'bg-white/80 hover:bg-white border-slate-200/90 hover:border-slate-300 shadow-sm'
+                    }`}
+                  >
+                    <div className={`p-2.5 rounded-xl ${sc.iconBg}`}>
+                      <Icon name={sc.iconName} className={`w-4 h-4 ${sc.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-xs font-semibold text-slate-900 truncate">{sc.title}</p>
+                        {selectedScenario === sc.id && <span className="flex h-1.5 w-1.5 rounded-full bg-slate-900" />}
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{sc.subtitle}</p>
+                    </div>
+                  </MotionButton>
+                ))}
+              </div>
+            </section>
+
+            {/* 4 Stat KPI Cards */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-500 tracking-wide uppercase">Active Complaints</span>
+                  <div className="p-2 rounded-xl bg-sky-50 text-sky-600"><Icon name="inbox" className="w-4 h-4" /></div>
+                </div>
+                <div className="mt-3"><span className="text-2xl font-bold text-slate-900 tracking-tight font-mono"><CountUp value={activeCount} /></span></div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-500 tracking-wide uppercase">High / Critical Priority</span>
+                  <div className="p-2 rounded-xl bg-rose-50 text-rose-600"><Icon name="alertCircle" className="w-4 h-4" /></div>
+                </div>
+                <div className="mt-3"><span className="text-2xl font-bold text-slate-900 tracking-tight font-mono"><CountUp value={highPriorityCount} /></span></div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-500 tracking-wide uppercase">Action in Progress</span>
+                  <div className="p-2 rounded-xl bg-amber-50 text-amber-600"><Icon name="clock" className="w-4 h-4" /></div>
+                </div>
+                <div className="mt-3"><span className="text-2xl font-bold text-slate-900 tracking-tight font-mono"><CountUp value={inProgressCount} /></span></div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-500 tracking-wide uppercase">Resolved Today</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600"><Icon name="checkCircle2" className="w-4 h-4" /></div>
+                </div>
+                <div className="mt-3"><span className="text-2xl font-bold text-slate-900 tracking-tight font-mono"><CountUp value={resolvedTodayCount} /></span></div>
+              </div>
+            </section>
+
+            {/* DIGITAL SELF-HEALING RECOVERY LAB (Prominently Displayed for IT & Digital Triage) */}
+            <DigitalSelfHealingLab
+              serviceHealth={serviceHealth}
+              onInjectOutage={handleInjectOutage}
+              onRunSandbox={handleRunSandbox}
+              onApprove={handleGrantApproval}
+              onExecuteRecovery={handleExecuteRecovery}
+              sandboxPassed={sandboxPassed}
+              approvalGranted={approvalGranted}
+              isRecovering={isRecovering}
+              logs={digitalLogs}
+            />
+
+            {/* Department Filter Tabs */}
+            <nav className="bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200 flex items-center gap-1 overflow-x-auto">
+              {DEPARTMENTS.map(dept => {
+                const isSelected = selectedDept === dept.id;
+                return (
+                  <MotionButton
+                    key={dept.id}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setSelectedDept(dept.id)}
+                    className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-colors shrink-0 ${
+                      isSelected
+                        ? 'text-slate-900 font-semibold bg-white shadow-sm border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                    }`}
+                  >
+                    <Icon name={dept.iconName} className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`} />
+                    <span>{dept.label}</span>
+                    <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-md font-mono ${
+                      isSelected ? 'bg-slate-100 text-slate-900 font-bold' : 'bg-slate-100/70 text-slate-500'
+                    }`}>
+                      {dept.count}
+                    </span>
+                  </MotionButton>
+                );
+              })}
+            </nav>
+
+            {/* Assigned Issues List (Hardware, Facilities, Safety, and Network Work Orders) */}
+            <section className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">
+                    Physical Facilities &amp; Departmental Triage Feed ({DEPARTMENTS.find(d => d.id === selectedDept)?.label || 'All'})
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Hostel maintenance, plumbing, electrical, and food safety issues dispatched to responsible authorities with SLA tracking.
+                  </p>
+                </div>
+                <MotionButton
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setIsNewReportModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors self-start sm:self-auto"
+                >
+                  <Icon name="plus" className="w-3.5 h-3.5" />
+                  <span>Submit Test Report</span>
+                </MotionButton>
+              </div>
+
+              {displayItems.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 text-slate-400 border border-slate-100">
+                    <Icon name="inbox" className="w-6 h-6" />
+                  </div>
+                  <div className="max-w-sm">
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      No Active Issues in {DEPARTMENTS.find(d => d.id === selectedDept)?.label || 'Department'}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      All facilities and resident equipment are currently operating normally within expected SLA thresholds.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReset}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors"
+                  >
+                    <Icon name="sparkles" className="w-3.5 h-3.5 text-indigo-500" />
+                    Load Sample Data
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {displayItems.map(issue => {
+                    const isExpanded = expandedIssueId === issue.id;
+                    const isDigital = issue.isDigital || issue.category === 'website';
+                    const isSafety = issue.isUrgentSafety || issue.operationalPriority?.includes('Critical') || issue.category === 'food_safety';
+
+                    let activeStepIndex = 0;
+                    const st = (issue.status || '').toLowerCase();
+                    if (st.includes('investigat')) activeStepIndex = 1;
+                    else if (st.includes('progress')) activeStepIndex = 2;
+                    else if (st.includes('resolved') || st.includes('closed')) activeStepIndex = 3;
+
+                    const physicalSteps = [
+                      { id: 1, label: '1. Intake & Routing' },
+                      { id: 2, label: '2. On-Site Inspection' },
+                      { id: 3, label: '3. Action & Part Repair' },
+                      { id: 4, label: '4. Quality Verification & Closure' }
+                    ];
+
+                    return (
+                      <article
+                        key={issue.id}
+                        className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${
+                          isExpanded
+                            ? 'border-slate-300 shadow-md ring-1 ring-slate-200'
+                            : 'border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow'
+                        }`}
+                      >
+                        {/* Header Bar */}
+                        <div
+                          onClick={() => setExpandedIssueId(isExpanded ? null : issue.id)}
+                          className="p-5 sm:p-6 cursor-pointer select-none flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        >
+                          <div className="flex items-start gap-3.5 min-w-0">
+                            <div className={`p-2.5 rounded-xl shrink-0 mt-0.5 sm:mt-0 ${
+                              isSafety ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              <Icon name={issue.category === 'network' ? 'wifi' : issue.category === 'food_safety' ? 'utensils' : issue.category === 'water' ? 'droplets' : 'wrench'} className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                  isSafety ? 'bg-rose-100/70 text-rose-800' : 'bg-amber-100/70 text-amber-800'
+                                }`}>
+                                  {isSafety ? '⚠️ SAFETY ESCALATION' : '🏢 HARDWARE / FACILITIES'}
+                                </span>
+                                <h3 className="text-sm font-semibold text-slate-900 truncate">
+                                  {issue.title || issue.categoryLabel || issue.category}
+                                </h3>
+                                <span className="font-mono text-xs text-slate-400">#{issue.id}</span>
+                                {issue.relatedReportsCount > 1 && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                    ⚡ {issue.relatedReportsCount} Correlated Reports
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-slate-500 mt-1.5 flex-wrap">
+                                <span>📍 {issue.location || 'Campus'}</span>
+                                <span>•</span>
+                                <span>🏢 Assigned: <strong className="text-slate-700 font-medium">{issue.departmentLabel || 'Operations'}</strong> ({issue.assignedOfficer || issue.assignedTo || 'Duty Officer'})</span>
+                                <span>•</span>
+                                <span className="text-slate-400">{issue.createdAt ? new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                              issue.operationalPriority?.includes('Critical') || issue.isUrgentSafety
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : issue.operationalPriority?.includes('High')
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}>
+                              {issue.operationalPriority || 'P3 - Medium'}
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
+                              st.includes('resolved')
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : st.includes('progress')
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : st.includes('investigat')
+                                ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                : 'bg-sky-50 text-sky-700 border-sky-200'
+                            }`}>
+                              {issue.status || 'Assigned'}
+                            </span>
+                            <div className="p-1 rounded-lg text-slate-400">
+                              <Icon name={isExpanded ? 'chevronUp' : 'chevronDown'} className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expandable Body */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 px-5 pb-5 sm:px-6 sm:pb-6 pt-4 space-y-4 bg-slate-50/50">
+                            
+                            {/* Problem Description */}
+                            <div className="bg-white p-4 rounded-xl border border-slate-200/80 space-y-2">
+                              <div>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                  Problem Description &amp; Resident Intake
+                                </span>
+                                <p className="text-xs text-slate-700 mt-0.5 leading-relaxed">
+                                  {issue.description || issue.deductionSummary || 'Resident reported issue at this campus location.'}
+                                </p>
+                              </div>
+                              {issue.priorityReason && (
+                                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-500">
+                                  <Icon name="alertCircle" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  <span><strong>Decision Rule &amp; Priority:</strong> {issue.priorityReason}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Urgent Safety Hazard Alert Banner */}
+                            {issue.isUrgentSafety && (
+                              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-3 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                  <Icon name="alertCircle" className="w-4 h-4 text-rose-600 shrink-0" />
+                                  <span>
+                                    <strong>⚠️ Urgent Human Response Required:</strong> On-site safety inspection dispatched to <strong>{issue.assignedOfficer || 'Safety Marshall'}</strong>.
+                                  </span>
+                                </div>
+                                <span className="px-2 py-0.5 bg-rose-200/60 rounded text-[10px] font-mono font-bold text-rose-900">
+                                  SLA: &lt;15 mins
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Department Work Order Card */}
+                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs flex items-center justify-between gap-4 flex-wrap">
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Official Departmental Work Order</span>
+                                <p className="font-semibold text-slate-800">
+                                  🏢 {issue.departmentLabel || 'Facilities Work Order'} · Lead: <strong>{issue.assignedOfficer || 'Duty Lead'}</strong>
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[10px] font-mono text-slate-400 block">Dispatch SLA</span>
+                                <span className="font-semibold text-slate-700">30-45 mins</span>
+                              </div>
+                            </div>
+
+                            {/* Workflow Stepper */}
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                  Physical Maintenance &amp; Verification Lifecycle
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  Step {activeStepIndex + 1} of 4
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                {physicalSteps.map((step, idx) => {
+                                  const isComplete = idx < activeStepIndex;
+                                  const isActive = idx === activeStepIndex;
+                                  return (
+                                    <div
+                                      key={step.id}
+                                      className={`flex-1 min-w-[130px] p-2.5 rounded-xl border transition-all ${
+                                        isActive
+                                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                                          : isComplete
+                                          ? 'bg-emerald-50/70 text-emerald-900 border-emerald-200/70'
+                                          : 'bg-slate-50 text-slate-500 border-slate-200/60 hover:bg-slate-100/60'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        {isComplete ? (
+                                          <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+                                            <Icon name="check" className="w-2.5 h-2.5" />
+                                          </div>
+                                        ) : isActive ? (
+                                          <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-mono opacity-60">#{idx + 1}</span>
+                                        )}
+                                        <span className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+                                          Step {idx + 1}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs font-semibold truncate">{step.label}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Redesigned Prominent Authority Governance & Action Dispatch Section */}
+                            <div className="mt-3 bg-gradient-to-b from-slate-900/[0.04] to-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-sm space-y-4">
+                              {/* Header & Status Indicator */}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="p-2 rounded-xl bg-slate-900 text-white shadow-xs">
+                                    <Icon name="shieldCheck" className="w-4 h-4 text-indigo-400" />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                                        Authority Command &amp; Action Dispatch
+                                      </h4>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                                        Warden Duty Gate
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                      Execute progressive departmental triage and official verification sign-off
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Live Status Badge */}
+                                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                                  <span className="text-[11px] text-slate-400 font-medium">Current Status:</span>
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shadow-2xs ${
+                                    st.includes('closed') || st.includes('verified')
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                      : st.includes('resolved')
+                                      ? 'bg-teal-50 text-teal-800 border-teal-300'
+                                      : st.includes('progress')
+                                      ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                      : st.includes('investigat')
+                                      ? 'bg-purple-50 text-purple-800 border-purple-300'
+                                      : 'bg-sky-50 text-sky-800 border-sky-300'
+                                  }`}>
+                                    <span className={`w-2 h-2 rounded-full ${
+                                      st.includes('closed') || st.includes('verified') ? 'bg-emerald-500' :
+                                      st.includes('resolved') ? 'bg-teal-500' :
+                                      st.includes('progress') ? 'bg-amber-500 animate-pulse' :
+                                      st.includes('investigat') ? 'bg-purple-500 animate-pulse' : 'bg-sky-500'
+                                    }`} />
+                                    {issue.status || 'Assigned'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* 4 Prominent Authority Action Buttons */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                {/* 1. Investigate */}
+                                <button
+                                  type="button"
+                                  onClick={() => handlePhysicalStatusUpdate(issue.id, 'Under Investigation')}
+                                  className={`group relative p-3 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between gap-2 ${
+                                    st.includes('investigat')
+                                      ? 'bg-purple-50/90 border-purple-400 ring-2 ring-purple-400/30 shadow-sm'
+                                      : 'bg-white hover:bg-purple-50/40 border-slate-200/90 hover:border-purple-300 shadow-2xs hover:shadow-xs'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-1 w-full">
+                                    <div className={`p-1.5 rounded-lg ${st.includes('investigat') ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 group-hover:bg-purple-200'}`}>
+                                      <Icon name="search" className="w-3.5 h-3.5" />
+                                    </div>
+                                    {st.includes('investigat') && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-200 text-purple-900">
+                                        Active
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-bold text-slate-900 group-hover:text-purple-900">
+                                      1. Investigate
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                                      Assign on-site inspection
+                                    </p>
+                                  </div>
+                                </button>
+
+                                {/* 2. Start Action / Dispatch */}
+                                <button
+                                  type="button"
+                                  onClick={() => handlePhysicalStatusUpdate(issue.id, 'Action in Progress')}
+                                  className={`group relative p-3 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between gap-2 ${
+                                    st.includes('progress')
+                                      ? 'bg-amber-50/90 border-amber-400 ring-2 ring-amber-400/30 shadow-sm'
+                                      : 'bg-white hover:bg-amber-50/40 border-slate-200/90 hover:border-amber-300 shadow-2xs hover:shadow-xs'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-1 w-full">
+                                    <div className={`p-1.5 rounded-lg ${st.includes('progress') ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 group-hover:bg-amber-200'}`}>
+                                      <Icon name="wrench" className="w-3.5 h-3.5" />
+                                    </div>
+                                    {st.includes('progress') && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-200 text-amber-900">
+                                        In Field
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-bold text-slate-900 group-hover:text-amber-900">
+                                      2. Dispatch Team
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                                      Start repair &amp; parts work
+                                    </p>
+                                  </div>
+                                </button>
+
+                                {/* 3. Mark Resolved */}
+                                <button
+                                  type="button"
+                                  onClick={() => handlePhysicalStatusUpdate(issue.id, 'Resolved')}
+                                  className={`group relative p-3 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between gap-2 ${
+                                    st.includes('resolved') && !st.includes('closed')
+                                      ? 'bg-emerald-50/90 border-emerald-400 ring-2 ring-emerald-400/30 shadow-sm'
+                                      : 'bg-white hover:bg-emerald-50/40 border-slate-200/90 hover:border-emerald-300 shadow-2xs hover:shadow-xs'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-1 w-full">
+                                    <div className={`p-1.5 rounded-lg ${st.includes('resolved') && !st.includes('closed') ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200'}`}>
+                                      <Icon name="checkCircle2" className="w-3.5 h-3.5" />
+                                    </div>
+                                    {st.includes('resolved') && !st.includes('closed') && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-200 text-emerald-900">
+                                        Fixed
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-900">
+                                      3. Mark Resolved
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                                      Field technician completed
+                                    </p>
+                                  </div>
+                                </button>
+
+                                {/* 4. Verify & Official Close */}
+                                <button
+                                  type="button"
+                                  onClick={() => handlePhysicalStatusUpdate(issue.id, 'Verified / Closed')}
+                                  className={`group relative p-3 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between gap-2 ${
+                                    st.includes('closed') || st.includes('verified')
+                                      ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-slate-800 shadow-sm'
+                                      : 'bg-white hover:bg-slate-900 hover:text-white border-slate-200/90 hover:border-slate-900 shadow-2xs hover:shadow-xs'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-1 w-full">
+                                    <div className={`p-1.5 rounded-lg ${st.includes('closed') || st.includes('verified') ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white'}`}>
+                                      <Icon name="shieldCheck" className="w-3.5 h-3.5" />
+                                    </div>
+                                    {(st.includes('closed') || st.includes('verified')) && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-400 text-slate-950">
+                                        Closed ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className={`text-xs font-bold ${st.includes('closed') || st.includes('verified') ? 'text-white' : 'text-slate-900 group-hover:text-white'}`}>
+                                      4. Verify &amp; Close
+                                    </div>
+                                    <p className={`text-[10px] mt-0.5 leading-tight ${st.includes('closed') || st.includes('verified') ? 'text-slate-300' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                                      Warden executive sign-off
+                                    </p>
+                                  </div>
+                                </button>
+                              </div>
+
+                              {/* Authority Sign-Off Audit & Guidance Strip */}
+                              <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500 flex-wrap gap-2">
+                                <div className="flex items-center gap-1.5">
+                                  <Icon name="userCheck" className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                  <span>
+                                    Duty Approver: <strong className="text-slate-700">{userProfile.name}</strong> ({userProfile.role || 'Hostel Authority'})
+                                  </span>
+                                </div>
+                                <span className="font-mono text-[10px] text-slate-400">
+                                  Audit Trail: Logged to Immutable Ledger
+                                </span>
+                              </div>
+                            </div>
+
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* New Report Modal */}
+          {isNewReportModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 relative space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-base font-semibold text-slate-900">
+                    Submit Quick Test Complaint
+                  </h3>
+                  <button
+                    onClick={() => setIsNewReportModalOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  >
+                    <Icon name="x" className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.target;
+                    handleAddNewReport({
+                      category: form.category.value,
+                      location: form.location.value,
+                      description: form.description.value
+                    });
+                  }}
+                  className="space-y-3.5 text-xs"
+                >
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Problem Category
+                    </label>
+                    <select
+                      name="category"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-slate-900 outline-none text-slate-800"
+                    >
+                      <option value="network">📶 Hostel Wi-Fi &amp; Internet (Hardware/Switch)</option>
+                      <option value="website">🌐 Campus Web Portal &amp; ERP (Digital Service)</option>
+                      <option value="food_safety">🍽️ Mess &amp; Food Quality (Safety Cell)</option>
+                      <option value="water">🚰 Drinking Water &amp; Plumbing (Civil Works)</option>
+                      <option value="electrical">💡 Power &amp; Electrical (Electrical Grid)</option>
+                      <option value="facilities">🏢 General Hostel Facilities</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Location / Room Number
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      required
+                      placeholder="e.g. Hostel A, Room 306"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-slate-900 outline-none text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Problem Description
+                    </label>
+                    <textarea
+                      name="description"
+                      required
+                      rows="3"
+                      placeholder="Describe the issue..."
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-slate-900 outline-none text-slate-800"
+                    ></textarea>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewReportModalOpen(false)}
+                      className="px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 shadow-sm"
+                    >
+                      Submit Report
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<HostelFacilitiesConsoleApp />);
+  </script>
 </body>
 </html>

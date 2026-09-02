@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register — LifeLine by Cognora</title>
-  <meta name="description" content="Register for LifeLine, your hostel's self-healing operations platform.">
+  <title>Student Registration — LifeLine by Cognora</title>
+  <meta name="description" content="Register for LifeLine, your campus self-healing operations platform.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-
   <header class="site-header">
     <div class="container nav-bar">
       <a class="brand" href="index.html">
@@ -29,7 +27,7 @@
       <div class="auth-card auth-card--wide">
         <p class="eyebrow">Student Registration</p>
         <h1 style="margin-bottom:0.25rem;">Create your LifeLine account</h1>
-        <p class="text-muted" style="margin-bottom:1.5rem;">One-time registration. No email verification needed — you can log in immediately after signing up.</p>
+        <p class="text-muted" style="margin-bottom:1.5rem;">One-time registration. You can log in immediately after signing up.</p>
 
         <form id="register-form" novalidate>
           <div class="form-grid form-grid--two">
@@ -45,12 +43,12 @@
             </div>
             <div class="field">
               <label for="bh_number">BH (Boys' Hostel) number <span class="required-mark">*</span></label>
-              <input type="text" id="bh_number" name="bh_number" required placeholder="e.g. BH-3">
+              <input type="text" id="bh_number" name="bh_number" required placeholder="e.g. BH-1 or Hostel A">
               <span class="field-error" id="err-bh" role="alert"></span>
             </div>
             <div class="field">
               <label for="room_number">Room number <span class="required-mark">*</span></label>
-              <input type="text" id="room_number" name="room_number" required placeholder="e.g. 214">
+              <input type="text" id="room_number" name="room_number" required placeholder="e.g. 306">
               <span class="field-error" id="err-room" role="alert"></span>
             </div>
           </div>
@@ -58,14 +56,14 @@
           <div class="field">
             <label for="email">Email address <span class="required-mark">*</span></label>
             <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
-            <span class="hint">Used to log in. No verification email will be sent.</span>
+            <span class="hint">Used to log in. No email verification step required.</span>
             <span class="field-error" id="err-email" role="alert"></span>
           </div>
 
           <div class="field">
             <label for="boarding_pass">Upload BH boarding pass <span class="required-mark">*</span></label>
             <input type="file" id="boarding_pass" name="boarding_pass" accept="image/*,.pdf" required aria-describedby="boarding-pass-hint">
-            <span class="hint" id="boarding-pass-hint">Photo or PDF of your hostel boarding pass, used to verify your room allocation.</span>
+            <span class="hint" id="boarding-pass-hint">Photo or document of your hostel boarding pass to verify room allocation.</span>
             <span class="field-error" id="err-boarding" role="alert"></span>
           </div>
 
@@ -83,29 +81,17 @@
           </div>
 
           <button type="submit" class="btn btn--primary btn--block" id="register-btn">
-            Create my account
-          </button>
-
-          <div class="auth-divider"><span>OR QUICK REGISTER</span></div>
-
-          <button type="button" class="btn btn--google btn--block" id="btn-google-register">
-            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-            </svg>
-            Sign up with Google Workspace
+            Create Account &amp; Access Portal
           </button>
         </form>
 
-        <p class="auth-card__foot">Already registered? <a href="login.html">Log in</a></p>
+        <p class="auth-card__foot" style="margin-top:1.25rem;">Already have an account? <a href="login.html">Sign In</a></p>
       </div>
     </div>
   </main>
 
   <footer class="site-footer">
-    <div class="container">LifeLine by Cognora — SOAIDEATHON-S3 demo build.</div>
+    <div class="container">LifeLine by Cognora — Campus AIOps Platform.</div>
   </footer>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
